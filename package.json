@@ -2,5 +2,10 @@
   "name": "node-call-dll",
   "version": "1.0.0",
   "main": "index.js",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": "https://github.com/timmyLan/node-call-dll.git",
+  "author": "llan <llan@amwares.com>",
+  "dependencies": {
+    "ffi": "^2.2.0"
+  }
 }
