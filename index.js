@@ -1,5 +1,5 @@
 var ffi = require('ffi');
-var libfactorial = ffi.Library('C:\Users\llan\code\node-call-dll\factorial', {
+var libfactorial = ffi.Library('./libfactorial', {
     'factorial': ['uint64', ['int']]
 });
 var output = libfactorial.factorial(5);
