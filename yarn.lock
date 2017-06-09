@@ -12,6 +12,17 @@ debug@2:
   dependencies:
     ms "2.0.0"
 
+edge-cs@1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/edge-cs/-/edge-cs-1.2.1.tgz#bd1a9ecdb94ef0ed40c894582046749e57045e5a"
+
+edge@^7.10.1:
+  version "7.10.1"
+  resolved "https://registry.yarnpkg.com/edge/-/edge-7.10.1.tgz#68386eac102f39724d273cc19aea30091e2b4ae4"
+  dependencies:
+    edge-cs "1.2.1"
+    nan "^2.0.9"
+
 ffi@^2.2.0:
   version "2.2.0"
   resolved "http://registry.npm.taobao.org/ffi/download/ffi-2.2.0.tgz#bf18b04666a29f71227ed56895d5430af47042fa"
@@ -26,7 +37,7 @@ ms@2.0.0:
   version "2.0.0"
   resolved "http://registry.npm.taobao.org/ms/download/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
 
-nan@2:
+nan@2, nan@^2.0.9:
   version "2.6.2"
   resolved "http://registry.npm.taobao.org/nan/download/nan-2.6.2.tgz#e4ff34e6c95fdfb5aecc08de6596f43605a7db45"
 
