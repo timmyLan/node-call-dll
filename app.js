@@ -12,23 +12,22 @@ app.use(views(path.join(__dirname, 'public'), {map: {html: 'nunjucks'}}));
 app.use(koaBody());
 app.use(require('koa-static')(path.join(__dirname, 'public')));
 
-// const ffi = require('ffi');
+const ffi = require('ffi');
 
 router.get('/', async(ctx)=> {
     await ctx.render('./html/index.html', {
-        title: "通过计算测试调用dll方法"
+        title: "通过计算测试调用dll/dylib方法"
     })
 });
-
 router.post('/result', (ctx)=> {
     let max = ctx.request.body.max;
-    // let libfactorial = ffi.Library('C:/Users/llan/code/node-call-dll/product', {
-    //     'factorial': ['uint64', ['int']]
-    // });
-    // let result = libfactorial.factorial(max);
+    let libfactorial = ffi.Library('product', {
+        'factorial': ['uint64', ['int']]
+    });
+    let result = libfactorial.factorial(max);
     return ctx.body = {
         status: 200,
-        result: max
+        result: result
     }
 });
 app.use(router.routes())
