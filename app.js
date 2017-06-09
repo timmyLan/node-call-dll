@@ -3,16 +3,23 @@
  */
 const Koa = require('koa');
 const app = new Koa();
-var Router = require('koa-router');
-var router = new Router();
+const Router = require('koa-router');
+let router = new Router();
 const koaBody = require('koa-body');
+const views = require('koa-views');
+const path = require('path');
+app.use(views(path.join(__dirname, 'public'), {map: {html: 'nunjucks'}}));
 app.use(koaBody());
+app.use(require('koa-static')(path.join(__dirname, 'public')));
 
 // const ffi = require('ffi');
 
-router.get('/', (ctx, next)=> {
-    return ctx.body = 'hello koa';
+router.get('/', async(ctx)=> {
+    await ctx.render('./html/index.html', {
+        title: "通过计算测试调用dll方法"
+    })
 });
+
 router.post('/result', (ctx)=> {
     let max = ctx.request.body.max;
     // let libfactorial = ffi.Library('C:/Users/llan/code/node-call-dll/product', {
