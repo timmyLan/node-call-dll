@@ -6,6 +6,9 @@
   "repository": "https://github.com/timmyLan/node-call-dll.git",
   "author": "llan <llan@amwares.com>",
   "dependencies": {
-    "ffi": "^2.2.0"
+    "ffi": "^2.2.0",
+    "koa": "^2.2.0",
+    "koa-body": "^2.1.0",
+    "koa-router": "^7.2.0"
   }
 }
