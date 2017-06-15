@@ -30,6 +30,17 @@ router.post('/result', (ctx)=> {
         result: result
     }
 });
+router.post('/test',(ctx)=>{
+    let retVal = ctx.request.body.retVal;
+    let libfactorial = ffi.Library('JKit', {
+        'JK_Retval2Str': ['char*', ['unsigned','long']]
+    });
+    let result = libfactorial.JK_Retval2Str(retVal);
+    return ctx.body = {
+       status: 200,
+       result: result
+   };
+});
 app.use(router.routes())
     .use(router.allowedMethods());
 

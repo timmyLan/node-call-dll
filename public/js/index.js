@@ -22,4 +22,16 @@
             $label.show();
         }
     });
+    $('.btn').on('click',(e)=>{
+        e.preventDefault();
+        $.ajax({
+            type: 'POST',
+            url: '/test',
+            data: {
+                retVal: 3
+            }
+        }).done((data)=> {
+            console.log('data',data);
+        });
+    })
 })(jQuery);
