@@ -21,7 +21,7 @@ router.get('/', async(ctx)=> {
 });
 router.post('/result', (ctx)=> {
     let max = ctx.request.body.max;
-    let libfactorial = ffi.Library('product', {
+    let libfactorial = ffi.Library('./product', {
         'factorial': ['uint64', ['int']]
     });
     let result = libfactorial.factorial(max);
@@ -30,20 +30,20 @@ router.post('/result', (ctx)=> {
         result: result
     }
 });
-router.post('/test',(ctx)=>{
-    let retVal = ctx.request.body.retVal;
-    let libfactorial = ffi.Library('JKit', {
-        'JK_Retval2Str': ['char*', ['unsigned','long']]
-    });
-    let result = libfactorial.JK_Retval2Str(retVal);
-    return ctx.body = {
-       status: 200,
-       result: result
-   };
-});
+//router.post('/test',(ctx)=>{
+//    let retVal = ctx.request.body.retVal;
+//    let libfactorial = ffi.Library('JKit', {
+//        'JK_Retval2Str': ['char*', ['unsigned','long']]
+//    });
+//    let result = libfactorial.JK_Retval2Str(retVal);
+//    return ctx.body = {
+//       status: 200,
+//       result: result
+//   };
+//});
 app.use(router.routes())
     .use(router.allowedMethods());
 
-app.listen(3000, ()=> {
+app.listen(3000,'0.0.0.0', ()=> {
     console.log('app listening at 3000');
 });
