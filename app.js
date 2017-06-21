@@ -16,7 +16,7 @@ const ffi = require('ffi');
 
 router.get('/', async(ctx)=> {
     await ctx.render('./html/index.html', {
-        title: "通过计算测试调用dll/dylib方法"
+        title: "通过计算测试调用dll/dylib/so方法"
     })
 });
 router.post('/result', (ctx)=> {
