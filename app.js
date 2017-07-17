@@ -65,14 +65,6 @@ router.post('/compare', (ctx)=> {
         result: result
     }
 });
-router.post('/compare', (ctx)=> {
-    let {first, second} = ctx.request.body;
-    let result = product.compare(first, second);
-    return ctx.body = {
-        status: 200,
-        result: result
-    }
-});
 app.use(router.routes())
     .use(router.allowedMethods());
 
