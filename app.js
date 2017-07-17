@@ -13,7 +13,13 @@ app.use(koaBody());
 app.use(require('koa-static')(path.join(__dirname, 'public')));
 
 const ffi = require('ffi');
-
+let product = ffi.Library('./product', {
+    'factorial': ['uint64', ['int']],
+    'add': ['int', ['int', 'int']],
+    'minus': ['int', ['int', 'int']],
+    'multiply': ['int', ['int', 'int']],
+    'compare': ['string', ['int', 'int']]
+});
 router.get('/', async(ctx)=> {
     await ctx.render('./html/index.html', {
         title: "通过计算测试调用dll/dylib/so方法"
@@ -21,29 +27,55 @@ router.get('/', async(ctx)=> {
 });
 router.post('/result', (ctx)=> {
     let max = ctx.request.body.max;
-    let libfactorial = ffi.Library('./product', {
-        'factorial': ['uint64', ['int']]
-    });
-    let result = libfactorial.factorial(max);
+    let result = product.factorial(max);
     return ctx.body = {
         status: 200,
         result: result
     }
 });
-//router.post('/test',(ctx)=>{
-//    let retVal = ctx.request.body.retVal;
-//    let libfactorial = ffi.Library('JKit', {
-//        'JK_Retval2Str': ['char*', ['unsigned','long']]
-//    });
-//    let result = libfactorial.JK_Retval2Str(retVal);
-//    return ctx.body = {
-//       status: 200,
-//       result: result
-//   };
-//});
+router.post('/add', (ctx)=> {
+    let {first, second} = ctx.request.body;
+    let result = product.add(first, second);
+    return ctx.body = {
+        status: 200,
+        result: result
+    }
+});
+router.post('/minus', (ctx)=> {
+    let {first, second} = ctx.request.body;
+    let result = product.minus(first, second);
+    return ctx.body = {
+        status: 200,
+        result: result
+    }
+});
+router.post('/multiply', (ctx)=> {
+    let {first, second} = ctx.request.body;
+    let result = product.multiply(first, second);
+    return ctx.body = {
+        status: 200,
+        result: result
+    }
+});
+router.post('/compare', (ctx)=> {
+    let {first, second} = ctx.request.body;
+    let result = product.compare(first, second);
+    return ctx.body = {
+        status: 200,
+        result: result
+    }
+});
+router.post('/compare', (ctx)=> {
+    let {first, second} = ctx.request.body;
+    let result = product.compare(first, second);
+    return ctx.body = {
+        status: 200,
+        result: result
+    }
+});
 app.use(router.routes())
     .use(router.allowedMethods());
 
-app.listen(3000,'0.0.0.0', ()=> {
+app.listen(3000, '0.0.0.0', ()=> {
     console.log('app listening at 3000');
 });

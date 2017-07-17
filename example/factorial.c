@@ -13,6 +13,5 @@ EXPORT uint64_t factorial(int max) {
   while (i >= 2) {
     result *= i--;
   }
-
   return result;
 }

@@ -16,3 +16,31 @@ EXPORT uint64_t factorial(int max) {
 
   return result;
 }
+
+EXPORT int add(int first,int second) {
+  int result = first+second;
+  return result;
+}
+
+EXPORT int minus(int first,int second) {
+  int result = first-second;
+  return result;
+}
+
+EXPORT int multiply(int first,int second) {
+  int result = first*second;
+  return result;
+}
+
+EXPORT const char * compare(int first,int second) {
+  const char *result;
+  if(first - second < 0 ){
+    result = "小于";
+  }else if(first - second > 0){
+    result = "大于";
+  }else{
+    result = "等于";
+  }
+  return result;
+}
+
