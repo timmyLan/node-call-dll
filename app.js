@@ -11,7 +11,6 @@ const path = require('path');
 app.use(views(path.join(__dirname, 'public'), {map: {html: 'nunjucks'}}));
 app.use(koaBody());
 app.use(require('koa-static')(path.join(__dirname, 'public')));
-
 const ffi = require('ffi');
 let product = ffi.Library('./product', {
     'factorial': ['uint64', ['int']],
@@ -71,6 +70,7 @@ router.post('/compare', (ctx)=> {
 app.use(router.routes())
     .use(router.allowedMethods());
 
-app.listen(3000, '0.0.0.0', ()=> {
+let server = app.listen(3000, '0.0.0.0', ()=> {
     console.log('app listening at 3000');
 });
+server.setTimeout(400000);
