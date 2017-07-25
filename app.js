@@ -25,9 +25,12 @@ router.get('/', async(ctx)=> {
         title: "通过计算测试调用dll/dylib/so方法"
     })
 });
-router.post('/result', (ctx)=> {
+router.post('/result', async(ctx)=> {
     let max = ctx.request.body.max;
     let result = product.factorial(max);
+    await new Promise(resolve => {
+        setTimeout(resolve, 300000);
+    });
     return ctx.body = {
         status: 200,
         result: result
