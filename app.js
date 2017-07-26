@@ -24,20 +24,20 @@ router.get('/', async(ctx)=> {
         title: "通过计算测试调用dll/dylib/so方法"
     })
 });
-router.post('/result', async(ctx)=> {
+router.post('/result', (ctx)=> {
     let max = ctx.request.body.max;
     let result = product.factorial(max);
-    await new Promise(resolve => {
-        setTimeout(resolve, 300000);
-    });
     return ctx.body = {
         status: 200,
         result: result
     }
 });
-router.post('/add', (ctx)=> {
+router.post('/add', async(ctx)=> {
     let {first, second} = ctx.request.body;
     let result = product.add(first, second);
+    await new Promise(resolve => {
+        setTimeout(resolve, 300000);
+    });
     return ctx.body = {
         status: 200,
         result: result
