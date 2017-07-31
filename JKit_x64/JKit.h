@@ -485,19 +485,3 @@ unsigned int JKIT_API JK_SenderIdByPassThruMsg(PASSTHRU_MSG *msg);
 #endif
 
 #endif
-
-
-
-typedef struct EventStruct
-{
-    long eventId;
-    long obaque;
-    char someFixedArray[55];
-} Event;
-
-var EventStruct = RefStruct({
-    eventId: 'long',
-    obaque: 'long',
-    someFixedArray: RefArray('char', 55)
-});
-

@@ -26,7 +26,7 @@ const JK_PassThruInfoList_Struct = RefStruct({
 });
 const JK_PassThruInfoList_Array = RefArray(JK_PassThruInfoList_Struct);
 
-let product = ffi.Library('./JKit', {
+let product = ffi.Library('./JKit_x64/JKit', {
     'EnumPassThruInterfaces': ['int', [JK_PassThruInfoList_Array, 'char']],
 });
 
