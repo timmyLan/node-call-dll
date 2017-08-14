@@ -289,7 +289,7 @@ router.post('/disconnect', (ctx)=> {
     return ctx.body = result_Model(result_Disconnect, ref.readCString(error_Disconnect), '/disconnect');
 });
 //统一操作(删除过虑器&断开指定连接)
-router.post('/disconnect', (ctx)=> {
+router.post('/end', (ctx)=> {
     let error_StopMsgFilter = new Buffer(250);
     let error_Disconnect = new Buffer(250);
     /**
