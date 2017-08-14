@@ -123,7 +123,6 @@ router.post('/open',(ctx)=>{
      * @return 设备数量
      */
     let result_open = lib.PassThru_Open(error_open);
-    console.log('result_open',result_open);
     return ctx.body = result_Model(result_open,ref.readCString(error_open),'/open');
 });
 
