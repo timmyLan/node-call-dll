@@ -8,38 +8,45 @@ let router = new Router();
 const koaBody = require('koa-body');
 const views = require('koa-views');
 const path = require('path');
+// koa middleware
 app.use(views(path.join(__dirname, 'public'), {map: {html: 'nunjucks'}}));
 app.use(koaBody());
 app.use(require('koa-static')(path.join(__dirname, 'public')));
-const RefArray = require('ref-array');
-const RefStruct = require('ref-struct');
+
+//ffi
 const ffi = require('ffi');
-const JK_PassThruInfo = RefStruct({
-    szVendor: RefArray('char', 55),
-    szConfigApplication: RefArray('char', 55),
-    szFunctionLibrary: RefArray('char', 55),
-    szName: RefArray('char', 55)
-});
-const JK_PassThruInfoList_Struct = RefStruct({
-    pPassThruLibs: JK_PassThruInfo,
-    nCount: 'int'
-});
-const JK_PassThruInfoList_Array = RefArray(JK_PassThruInfoList_Struct);
+const ref = require('ref');
+const StructType = require('ref-struct');
 
-let product = ffi.Library('./JKit_x64/JKit', {
-    'EnumPassThruInterfaces': ['int', [JK_PassThruInfoList_Array, 'char']],
+//define ffi
+let JK_PassThruInfo = StructType({
+    szVendor:'string',
+    szName:'string',
+    szFunctionLibrary:'string',
+    szConfigApplication:'string'
+});
+let JK_PassThruInfoList = StructType({
+    pPassThruLibs:JK_PassThruInfo,
+    nCount:ref.types.int
+});
+// JK_PassThruInfoList.defineProperty('nCount','int',0)
+let JK_PassThruInfoList_Ptr = ref.refType(JK_PassThruInfoList);
+let lib = ffi.Library('./JKit',{
+    'JK_EnumPassThruInterfaces':['int',[JK_PassThruInfoList_Ptr,'string']]
 });
 
-router.get('/', async(ctx)=> {
-    await ctx.render('./html/index.html', {
-        title: "通过计算测试调用dll/dylib/so方法"
-    })
-});
 router.post('/result', (ctx)=> {
-    let result = product.EnumPassThruInterfaces();
+    let ErrorMsg = ref.alloc('string');
+    let infoList = ref.alloc(JK_PassThruInfoList_Ptr);
+    let result = lib.JK_EnumPassThruInterfaces(infoList,ErrorMsg);
+    let data = infoList.deref().deref();
+    let msg = ErrorMsg.deref();
+    console.log('msg',msg);
+    console.log('data',data);
     return ctx.body = {
         status: 200,
-        result: result
+        result:result
+
     }
 });
 
@@ -49,4 +56,3 @@ app.use(router.routes())
 let server = app.listen(3000, '0.0.0.0', ()=> {
     console.log('app listening at 3000');
 });
-server.setTimeout(400000);
