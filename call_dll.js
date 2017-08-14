@@ -48,7 +48,7 @@ winston.configure({
  * resful返回信息模板
  * @param  {[type]} data     [调用dll返回结果]
  * @param  {[type]} errorMsg [调用dll发生错误]
- * @param  {[type]} errorMsg [resful名]
+ * @param  {[type]} refName [resful名]
  * @return {[type]}          [status为200则成功,500则失败并写入错误日志]
  */
 const result_Model = (data,errorMsg=null,refName)=>{
@@ -179,6 +179,35 @@ router.post('/startMsgFilter',(ctx)=>{
     }
     let result_StartMsgFilter = lib.PassThru_StartMsgFilter(error_StartMsgFilter,index,filterType=3);
     return ctx.body = result_Model(result_StartMsgFilter,ref.readCString(error_StartMsgFilter),'/startMsgFilter');
+});
+//统一操作(链接设备&IO配置设备&配置过虑器)
+router.post('/startUp',(ctx)=>{
+    let error_connect = new Buffer(250);
+    let error_ioctl = new Buffer(250);
+    let error_StartMsgFilter = new Buffer(250);
+    /**
+     *
+     * @param  {[string]} error_StartMsgFilter      [错误信息]
+     * @param  {[int]} index      [Index索引]
+     * @param  {[int]} filterType      [filterType默认3]
+     * @return 0成功 非0失败
+     */
+    let {index, protocolID,flags,baudRate,filterType,ioctlID} = ctx.request.body;
+    if(!index && index!=0){
+        return ctx.body = miss_arg('缺少参数 index [Index索引]');
+    }
+    let result_connect = lib.PassThru_Connect(error_connect,index,protocolID=6,flags=0,baudRate=500000);
+    let result_ioctl = lib.PassThru_Ioctl(error_ioctl,index,ioctlID=2);
+    let result_StartMsgFilter = lib.PassThru_StartMsgFilter(error_StartMsgFilter,index,filterType=3);
+    return ctx.body = result_Model({
+        result_connect:result_connect,
+        result_ioctl:result_ioctl,
+        result_StartMsgFilter:result_StartMsgFilter
+    },{
+        error_connect:ref.readCString(error_connect),
+        error_ioctl:ref.readCString(error_ioctl),
+        error_StartMsgFilter:ref.readCString(error_StartMsgFilter)
+    },'/startUp');
 });
 // 发送
 router.post('/writeMsgs',(ctx)=>{
