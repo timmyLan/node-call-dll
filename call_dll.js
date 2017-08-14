@@ -281,6 +281,17 @@ router.post('/stopMsgFilter', (ctx)=> {
 // 断开指定连接
 router.post('/disconnect', (ctx)=> {
     let error_Disconnect = new Buffer(250);
+    let {index} = ctx.request.body;
+    if (!index && index != 0) {
+        return ctx.body = miss_arg('缺少参数 index [Index索引]');
+    }
+    let result_Disconnect = lib.PassThru_Disconnect(error_Disconnect, index);
+    return ctx.body = result_Model(result_Disconnect, ref.readCString(error_Disconnect), '/disconnect');
+});
+//统一操作(删除过虑器&断开指定连接)
+router.post('/disconnect', (ctx)=> {
+    let error_StopMsgFilter = new Buffer(250);
+    let error_Disconnect = new Buffer(250);
     /**
      *
      * @param  {[string]} error_Disconnect      [错误信息]
@@ -291,8 +302,20 @@ router.post('/disconnect', (ctx)=> {
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
+    let result_StopMsgFilter = lib.PassThru_StopMsgFilter(error_StopMsgFilter, index);
     let result_Disconnect = lib.PassThru_Disconnect(error_Disconnect, index);
-    return ctx.body = result_Model(result_Disconnect, ref.readCString(error_Disconnect), '/disconnect');
+    if(ref.readCString(error_StopMsgFilter)||ref.readCString(error_Disconnect)){
+        return {
+            status:500,
+            error_StopMsgFilter:ref.readCString(error_StopMsgFilter),
+            error_Disconnect:ref.readCString(error_Disconnect)
+        }
+    }
+    return ctx.body = {
+        status:200,
+        result_StopMsgFilter:result_StopMsgFilter,
+        result_Disconnect:result_Disconnect
+    }
 });
 // 关闭设备
 router.post('/passThru_Close', (ctx)=> {
