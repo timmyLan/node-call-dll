@@ -98,7 +98,7 @@ router.post('/reg',(ctx)=>{
     /**
      * 
      * @param  {[string]} error_load      [错误信息]
-     * @return 成功加载动态库数目
+     * @return 注册表数目
      */
     let result_reg = lib.PassThru_InquiryReg(error_reg);
     return ctx.body = result_Model(result_reg,ref.readCString(error_reg),'/reg');
@@ -213,7 +213,7 @@ router.post('/readMsgs',(ctx)=>{
      * @param  {[string]} error_ReadMsgs      [错误信息]
      * @param  {[int]} index      [Index索引]
      * @param  {[string]} msg_ReadMsgs      [Message要接收的字符串]
-     * @param  {[int]} pNumMsgs      [pNumMsgs接收字符串的数量]
+     * @param  {[int]} pNumMsgs      [pNumMsgs接收字符串的数量默认为null]
      * @param  {[int]} timeout      [Timeout默认1000]
      * @return 0成功 非0失败
      */
