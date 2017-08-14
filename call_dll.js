@@ -125,7 +125,29 @@ router.post('/open', (ctx)=> {
     let result_open = lib.PassThru_Open(error_open);
     return ctx.body = result_Model(result_open, ref.readCString(error_open), '/open');
 });
-
+// 统一操作(获取注册表信息&加载动态库&检测设备数量)
+router.post('/ready', (ctx)=> {
+    let error_reg = new Buffer(250);
+    let error_load = new Buffer(250);
+    let error_open = new Buffer(250);
+    let result_reg = lib.PassThru_InquiryReg(error_reg);
+    let result_load = lib.PassThru_LoadDLL(error_load);
+    let result_open = lib.PassThru_Open(error_open);
+    if(ref.readCString(error_reg)||ref.readCString(error_load)||ref.readCString(error_open)){
+        return {
+            status:500,
+            error_reg:ref.readCString(error_reg),
+            error_load:ref.readCString(error_load),
+            error_open:ref.readCString(error_open)
+        }
+    }
+    return ctx.body ={
+        status:200,
+        result_reg:result_reg,
+        result_load:result_load,
+        result_open:result_open
+    }
+});
 // 链接设备
 router.post('/connect', (ctx)=> {
     let error_connect = new Buffer(250);
