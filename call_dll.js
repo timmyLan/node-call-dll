@@ -263,21 +263,36 @@ router.post('/ready', (ctx)=> {
     let error_load = new Buffer(250);
     let error_open = new Buffer(250);
     let result_reg = lib.PassThru_InquiryReg(error_reg);
-    let result_load = lib.PassThru_LoadDLL(error_load);
-    let result_open = lib.PassThru_Open(error_open);
-    if(ref.readCString(error_reg)||ref.readCString(error_load)||ref.readCString(error_open)){
-        return ctx.body={
+    if(ref.readCString(error_reg)){
+        winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_reg)}`);
+        return ctx.body = {
             status:500,
-            error_reg:ref.readCString(error_reg),
-            error_load:ref.readCString(error_load),
-            error_open:ref.readCString(error_open)
+            errorMsg:ref.readCString(error_reg)
+        }
+    }
+    let result_load = lib.PassThru_LoadDLL(error_load);
+    if(ref.readCString(error_load)){
+        winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_load)}`);
+        return ctx.body = {
+            status:500,
+            errorMsg:ref.readCString(error_load)
+        }
+    }
+    let result_open = lib.PassThru_Open(error_open);
+    if(ref.readCString(error_open)){
+        winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_open)}`);
+        return ctx.body = {
+            status:500,
+            errorMsg:ref.readCString(error_open)
         }
     }
     return ctx.body ={
         status:200,
-        result_reg:result_reg,
-        result_load:result_load,
-        result_open:result_open
+        data:{
+            result_reg:result_reg,
+            result_load:result_load,
+            result_open:result_open
+        }
     }
 });
 
@@ -298,21 +313,36 @@ router.post('/startUp', (ctx)=> {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
     let result_connect = lib.PassThru_Connect(error_connect, index, protocolID = 6, flags = 0, baudRate = 500000);
+    if(ref.readCString(error_connect)){
+        winston.error(`call /startUp resful,error with call dll ---- ${ref.readCString(error_connect)}`);
+        return ctx.body = {
+            status:500,
+            errorMsg:ref.readCString(error_connect)
+        }
+    }
     let result_ioctl = lib.PassThru_Ioctl(error_ioctl, index, ioctlID = 2);
+    if(ref.readCString(error_ioctl)){
+        winston.error(`call /startUp resful,error with call dll ---- ${ref.readCString(error_ioctl)}`);
+        return ctx.body = {
+            status:500,
+            errorMsg:ref.readCString(error_ioctl)
+        }
+    }
     let result_StartMsgFilter = lib.PassThru_StartMsgFilter(error_StartMsgFilter, index, filterType = 3);
-    if (ref.readCString(error_connect) || ref.readCString(error_ioctl) || ref.readCString(error_StartMsgFilter)) {
-        return ctx.body ={
-            status: 500,
-            error_connect: ref.readCString(error_connect),
-            error_ioctl: ref.readCString(error_ioctl),
-            error_StartMsgFilter: ref.readCString(error_StartMsgFilter)
+    if(ref.readCString(error_StartMsgFilter)){
+        winston.error(`call /startUp resful,error with call dll ---- ${ref.readCString(error_StartMsgFilter)}`);
+        return ctx.body = {
+            status:500,
+            errorMsg:ref.readCString(error_StartMsgFilter)
         }
     }
     return ctx.body = {
         status:200,
-        result_connect: result_connect,
-        result_ioctl: result_ioctl,
-        result_StartMsgFilter: result_StartMsgFilter
+        data:{
+            result_connect: result_connect,
+            result_ioctl: result_ioctl,
+            result_StartMsgFilter: result_StartMsgFilter
+        }
     };
 });
 
@@ -331,18 +361,27 @@ router.post('/end', (ctx)=> {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
     let result_StopMsgFilter = lib.PassThru_StopMsgFilter(error_StopMsgFilter, index);
-    let result_Disconnect = lib.PassThru_Disconnect(error_Disconnect, index);
-    if(ref.readCString(error_StopMsgFilter)||ref.readCString(error_Disconnect)){
-        return ctx.body ={
+    if(ref.readCString(error_StopMsgFilter)){
+        winston.error(`call /end resful,error with call dll ---- ${ref.readCString(error_StopMsgFilter)}`);
+        return ctx.body = {
             status:500,
-            error_StopMsgFilter:ref.readCString(error_StopMsgFilter),
-            error_Disconnect:ref.readCString(error_Disconnect)
+            errorMsg:ref.readCString(error_StopMsgFilter)
+        }
+    }
+    let result_Disconnect = lib.PassThru_Disconnect(error_Disconnect, index);
+    if(ref.readCString(error_Disconnect)){
+        winston.error(`call /end resful,error with call dll ---- ${ref.readCString(error_Disconnect)}`);
+        return ctx.body = {
+            status:500,
+            errorMsg:ref.readCString(error_Disconnect)
         }
     }
     return ctx.body = {
         status:200,
-        result_StopMsgFilter:result_StopMsgFilter,
-        result_Disconnect:result_Disconnect
+        data:{
+            result_StopMsgFilter:result_StopMsgFilter,
+            result_Disconnect:result_Disconnect
+        }
     }
 });
 
@@ -370,7 +409,7 @@ router.post('/result', (ctx)=> {
     let result = product.factorial(max);
     return ctx.body = {
         status: 200,
-        result: result
+        data: result
     }
 });
 router.post('/add', async(ctx)=> {
@@ -381,7 +420,7 @@ router.post('/add', async(ctx)=> {
     });
     return ctx.body = {
         status: 200,
-        result: result
+        data: result
     }
 });
 router.post('/minus', (ctx)=> {
@@ -389,7 +428,7 @@ router.post('/minus', (ctx)=> {
     let result = product.minus(first, second);
     return ctx.body = {
         status: 200,
-        result: result
+        data: result
     }
 });
 router.post('/multiply', (ctx)=> {
@@ -397,7 +436,7 @@ router.post('/multiply', (ctx)=> {
     let result = product.multiply(first, second);
     return ctx.body = {
         status: 200,
-        result: result
+        data: result
     }
 });
 router.post('/compare', (ctx)=> {
@@ -405,7 +444,7 @@ router.post('/compare', (ctx)=> {
     let result = product.compare(first, second);
     return ctx.body = {
         status: 200,
-        result: result
+        data: result
     }
 });
 app.use(router.routes())
