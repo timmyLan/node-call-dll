@@ -19,3 +19,6 @@
 {"level":"error","message":"call /connect resful,error with call dll ---- There's already a 6:ISO15765 channel open","timestamp":"2017-08-14T03:01:35.526Z"}
 {"level":"error","message":"call /connect resful,error with call dll ---- OutsideBounds","timestamp":"2017-08-14T03:01:55.758Z"}
 {"level":"error","message":"call /ioctl resful,error with call dll ---- [0x00000002] J2534_ERR_INVALID_CHANNEL_ID","timestamp":"2017-08-14T03:02:44.714Z"}
+{"level":"error","message":"call /open resful,error with call dll ---- [0x0000000e] J2534_ERR_DEVICE_IN_USE","timestamp":"2017-08-15T03:20:16.915Z"}
+{"level":"error","message":"call /open resful,error with call dll ---- [0x0000000e] J2534_ERR_DEVICE_IN_USE","timestamp":"2017-08-15T03:20:24.126Z"}
+{"level":"error","message":"call /open resful,error with call dll ---- [0x0000000e] J2534_ERR_DEVICE_IN_USE","timestamp":"2017-08-15T03:27:07.438Z"}

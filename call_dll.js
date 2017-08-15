@@ -125,29 +125,7 @@ router.post('/open', (ctx)=> {
     let result_open = lib.PassThru_Open(error_open);
     return ctx.body = result_Model(result_open, ref.readCString(error_open), '/open');
 });
-// 统一操作(获取注册表信息&加载动态库&检测设备数量)
-router.post('/ready', (ctx)=> {
-    let error_reg = new Buffer(250);
-    let error_load = new Buffer(250);
-    let error_open = new Buffer(250);
-    let result_reg = lib.PassThru_InquiryReg(error_reg);
-    let result_load = lib.PassThru_LoadDLL(error_load);
-    let result_open = lib.PassThru_Open(error_open);
-    if(ref.readCString(error_reg)||ref.readCString(error_load)||ref.readCString(error_open)){
-        return {
-            status:500,
-            error_reg:ref.readCString(error_reg),
-            error_load:ref.readCString(error_load),
-            error_open:ref.readCString(error_open)
-        }
-    }
-    return ctx.body ={
-        status:200,
-        result_reg:result_reg,
-        result_load:result_load,
-        result_open:result_open
-    }
-});
+
 // 链接设备
 router.post('/connect', (ctx)=> {
     let error_connect = new Buffer(250);
@@ -202,40 +180,7 @@ router.post('/startMsgFilter', (ctx)=> {
     let result_StartMsgFilter = lib.PassThru_StartMsgFilter(error_StartMsgFilter, index, filterType = 3);
     return ctx.body = result_Model(result_StartMsgFilter, ref.readCString(error_StartMsgFilter), '/startMsgFilter');
 });
-//统一操作(链接设备&IO配置设备&配置过虑器)
-router.post('/startUp', (ctx)=> {
-    let error_connect = new Buffer(250);
-    let error_ioctl = new Buffer(250);
-    let error_StartMsgFilter = new Buffer(250);
-    /**
-     *
-     * @param  {[string]} error_StartMsgFilter      [错误信息]
-     * @param  {[int]} index      [Index索引]
-     * @param  {[int]} filterType      [filterType默认3]
-     * @return 0成功 非0失败
-     */
-    let {index, protocolID, flags, baudRate, filterType, ioctlID} = ctx.request.body;
-    if (!index && index != 0) {
-        return ctx.body = miss_arg('缺少参数 index [Index索引]');
-    }
-    let result_connect = lib.PassThru_Connect(error_connect, index, protocolID = 6, flags = 0, baudRate = 500000);
-    let result_ioctl = lib.PassThru_Ioctl(error_ioctl, index, ioctlID = 2);
-    let result_StartMsgFilter = lib.PassThru_StartMsgFilter(error_StartMsgFilter, index, filterType = 3);
-    if (ref.readCString(error_connect) || ref.readCString(error_ioctl) || ref.readCString(error_StartMsgFilter)) {
-        return {
-            status: 500,
-            error_connect: ref.readCString(error_connect),
-            error_ioctl: ref.readCString(error_ioctl),
-            error_StartMsgFilter: ref.readCString(error_StartMsgFilter)
-        }
-    }
-    return ctx.body = {
-        status:200,
-        result_connect: result_connect,
-        result_ioctl: result_ioctl,
-        result_StartMsgFilter: result_StartMsgFilter
-    };
-});
+
 // 发送
 router.post('/writeMsgs', (ctx)=> {
     let error_WriteMsgs = new Buffer(250);
@@ -310,6 +255,67 @@ router.post('/disconnect', (ctx)=> {
     let result_Disconnect = lib.PassThru_Disconnect(error_Disconnect, index);
     return ctx.body = result_Model(result_Disconnect, ref.readCString(error_Disconnect), '/disconnect');
 });
+
+
+// 统一操作(获取注册表信息&加载动态库&检测设备数量)
+router.post('/ready', (ctx)=> {
+    let error_reg = new Buffer(250);
+    let error_load = new Buffer(250);
+    let error_open = new Buffer(250);
+    let result_reg = lib.PassThru_InquiryReg(error_reg);
+    let result_load = lib.PassThru_LoadDLL(error_load);
+    let result_open = lib.PassThru_Open(error_open);
+    if(ref.readCString(error_reg)||ref.readCString(error_load)||ref.readCString(error_open)){
+        return ctx.body={
+            status:500,
+            error_reg:ref.readCString(error_reg),
+            error_load:ref.readCString(error_load),
+            error_open:ref.readCString(error_open)
+        }
+    }
+    return ctx.body ={
+        status:200,
+        result_reg:result_reg,
+        result_load:result_load,
+        result_open:result_open
+    }
+});
+
+//统一操作(链接设备&IO配置设备&配置过虑器)
+router.post('/startUp', (ctx)=> {
+    let error_connect = new Buffer(250);
+    let error_ioctl = new Buffer(250);
+    let error_StartMsgFilter = new Buffer(250);
+    /**
+     *
+     * @param  {[string]} error_StartMsgFilter      [错误信息]
+     * @param  {[int]} index      [Index索引]
+     * @param  {[int]} filterType      [filterType默认3]
+     * @return 0成功 非0失败
+     */
+    let {index, protocolID, flags, baudRate, filterType, ioctlID} = ctx.request.body;
+    if (!index && index != 0) {
+        return ctx.body = miss_arg('缺少参数 index [Index索引]');
+    }
+    let result_connect = lib.PassThru_Connect(error_connect, index, protocolID = 6, flags = 0, baudRate = 500000);
+    let result_ioctl = lib.PassThru_Ioctl(error_ioctl, index, ioctlID = 2);
+    let result_StartMsgFilter = lib.PassThru_StartMsgFilter(error_StartMsgFilter, index, filterType = 3);
+    if (ref.readCString(error_connect) || ref.readCString(error_ioctl) || ref.readCString(error_StartMsgFilter)) {
+        return ctx.body ={
+            status: 500,
+            error_connect: ref.readCString(error_connect),
+            error_ioctl: ref.readCString(error_ioctl),
+            error_StartMsgFilter: ref.readCString(error_StartMsgFilter)
+        }
+    }
+    return ctx.body = {
+        status:200,
+        result_connect: result_connect,
+        result_ioctl: result_ioctl,
+        result_StartMsgFilter: result_StartMsgFilter
+    };
+});
+
 //统一操作(删除过虑器&断开指定连接)
 router.post('/end', (ctx)=> {
     let error_StopMsgFilter = new Buffer(250);
@@ -327,7 +333,7 @@ router.post('/end', (ctx)=> {
     let result_StopMsgFilter = lib.PassThru_StopMsgFilter(error_StopMsgFilter, index);
     let result_Disconnect = lib.PassThru_Disconnect(error_Disconnect, index);
     if(ref.readCString(error_StopMsgFilter)||ref.readCString(error_Disconnect)){
-        return {
+        return ctx.body ={
             status:500,
             error_StopMsgFilter:ref.readCString(error_StopMsgFilter),
             error_Disconnect:ref.readCString(error_Disconnect)
@@ -339,6 +345,7 @@ router.post('/end', (ctx)=> {
         result_Disconnect:result_Disconnect
     }
 });
+
 // 关闭设备
 router.post('/passThru_Close', (ctx)=> {
     let error_Close = new Buffer(250);
