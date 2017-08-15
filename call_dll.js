@@ -351,7 +351,56 @@ router.post('/passThru_Close', (ctx)=> {
     let result_Close = lib.PassThru_Close(error_Close);
     return ctx.body = result_Model(result_Close, ref.readCString(error_Close), '/passThru_Close');
 });
-
+let product = ffi.Library('./product', {
+    'factorial': ['uint64', ['int']],
+    'add': ['int', ['int', 'int']],
+    'minus': ['int', ['int', 'int']],
+    'multiply': ['int', ['int', 'int']],
+    'compare': ['string', ['int', 'int']]
+});
+router.post('/result', (ctx)=> {
+    let max = ctx.request.body.max;
+    let result = product.factorial(max);
+    return ctx.body = {
+        status: 200,
+        result: result
+    }
+});
+router.post('/add', async(ctx)=> {
+    let {first, second} = ctx.request.body;
+    let result = product.add(first, second);
+    await new Promise(resolve => {
+        setTimeout(resolve, 300);
+    });
+    return ctx.body = {
+        status: 200,
+        result: result
+    }
+});
+router.post('/minus', (ctx)=> {
+    let {first, second} = ctx.request.body;
+    let result = product.minus(first, second);
+    return ctx.body = {
+        status: 200,
+        result: result
+    }
+});
+router.post('/multiply', (ctx)=> {
+    let {first, second} = ctx.request.body;
+    let result = product.multiply(first, second);
+    return ctx.body = {
+        status: 200,
+        result: result
+    }
+});
+router.post('/compare', (ctx)=> {
+    let {first, second} = ctx.request.body;
+    let result = product.compare(first, second);
+    return ctx.body = {
+        status: 200,
+        result: result
+    }
+});
 app.use(router.routes())
     .use(router.allowedMethods());
 let server = app.listen(3000, '0.0.0.0', ()=> {
