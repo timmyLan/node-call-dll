@@ -17,12 +17,22 @@ app.use(require('koa-static')(path.join(__dirname, 'public')));
 //ffi
 const ffi = require('ffi');
 const ref = require('ref');
+var StructType = require('ref-struct');
 let CString = ref.types.CString;
 let int = ref.types.int;
 let ulong = ref.types.ulong;
 let ulongPtr = ref.refType(ulong);
+let PassThru_RegName = StructType({
+    Name:CString
+});
+let PassThru_RegName_ref = ref.refType(PassThru_RegName);
+let PassThru_RegInfo = StructType({
+    PassThruRegName:PassThru_RegName_ref,
+    Count:int
+});
+let PassThru_RegInfo_ref = ref.refType(PassThru_RegInfo);
 let lib = ffi.Library('./PassThrough', {
-    'PassThru_InquiryReg': [int, [CString]],
+    'PassThru_InquiryReg': [PassThru_RegInfo_ref, [CString]],
     'PassThru_LoadDLL': [int, [CString]],
     'PassThru_Open': [int, [CString]],
     'PassThru_Connect': [int, [CString, int, ulong, ulong, ulong]],
@@ -101,6 +111,7 @@ router.post('/reg', (ctx)=> {
      * @return 注册表数目
      */
     let result_reg = lib.PassThru_InquiryReg(error_reg);
+    console.log('reg',result_reg);
     return ctx.body = result_Model(result_reg, ref.readCString(error_reg), '/reg');
 });
 // 加载动态库
