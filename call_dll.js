@@ -20,6 +20,7 @@ const ref = require('ref');
 var StructType = require('ref-struct');
 let CString = ref.types.CString;
 let int = ref.types.int;
+let voidType = ref.types.void;
 let ulong = ref.types.ulong;
 let ulongPtr = ref.refType(ulong);
 let PassThru_RegName = StructType({
@@ -31,19 +32,22 @@ let PassThru_RegInfo = StructType({
     Count: int
 });
 let PassThru_RegInfo_ref = ref.refType(PassThru_RegInfo);
+let pChannelID = ref.alloc(ulong);
+let pFilterID = ref.alloc(ulong);
 let lib = ffi.Library('./PassThru', {
     'PassThru_InquiryReg': [int, [CString]],
     'PassThru_InquiryIndex': [CString, [int]],
     'PassThru_LoadDLL': [int, [CString]],
     'PassThru_Open': [int, [CString, int]],
     'PassThru_Connect': [int, [CString, int, ulongPtr, ulong, ulong, ulong]],
-    'PassThru_Ioctl': [int, [CString, int, ulong]],
-    'PassThru_StartMsgFilter': [int, [CString, int, ulong]],
+    'PassThru_Ioctl': [int, [CString, int,ulongPtr, ulong]],
+    'PassThru_StartMsgFilter': [int, [CString, int,ulongPtr,ulongPtr, ulong]],
     'PassThru_WriteMsgs': [int, [CString, int, CString, ulong]],
     'PassThru_ReadMsgs': [int, [CString, int, CString, ulongPtr, ulong]],
-    'PassThru_StopMsgFilter': [int, [CString, int]],
-    'PassThru_Disconnect': [int, [CString, int]],
-    'PassThru_Close': [int, [CString]],
+    'PassThru_StopMsgFilter': [int, [CString, int,ulongPtr,ulongPtr]],
+    'PassThru_Disconnect': [int, [CString, int,ulongPtr]],
+    'PassThru_Close': [int, [CString,int]],
+    'PassThru_Delete': [voidType, []]
 });
 //logs
 let winston = require('winston');
@@ -168,7 +172,6 @@ router.post('/connect', (ctx)=> {
      * @param  {[int]} baudRate      [BaudRate500000]
      * @return 0成功 非0失败
      */
-    let pChannelID = ref.alloc(ulong);
     let {index, protocolID, flags, baudRate} = ctx.request.body;
     if (!index && index !== 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
@@ -191,7 +194,7 @@ router.post('/ioctl', (ctx)=> {
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
-    let result_ioctl = lib.PassThru_Ioctl(error_ioctl, index, ioctlID = 2);
+    let result_ioctl = lib.PassThru_Ioctl(error_ioctl, index,pChannelID, ioctlID = 2);
     return ctx.body = result_Model(result_ioctl, ref.readCString(error_ioctl), '/ioctl');
 });
 // 配置过虑器
@@ -208,7 +211,9 @@ router.post('/startMsgFilter', (ctx)=> {
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
-    let result_StartMsgFilter = lib.PassThru_StartMsgFilter(error_StartMsgFilter, index, filterType = 3);
+    let result_StartMsgFilter = lib.PassThru_StartMsgFilter(error_StartMsgFilter, index, pChannelID,pFilterID,filterType = 3);
+    console.log('pChannelID',pChannelID.deref());
+    console.log('pFilterID',pFilterID.deref());
     return ctx.body = result_Model(result_StartMsgFilter, ref.readCString(error_StartMsgFilter), '/startMsgFilter');
 });
 
@@ -273,7 +278,9 @@ router.post('/stopMsgFilter', (ctx)=> {
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
-    let result_StopMsgFilter = lib.PassThru_StopMsgFilter(error_StopMsgFilter, index);
+    let result_StopMsgFilter = lib.PassThru_StopMsgFilter(error_StopMsgFilter, index ,pChannelID,pFilterID);
+    console.log('pChannelID',pChannelID.deref());
+    console.log('pFilterID',pFilterID.deref());
     return ctx.body = result_Model(result_StopMsgFilter, ref.readCString(error_StopMsgFilter), '/stopMsgFilter');
 });
 // 断开指定连接
@@ -283,7 +290,8 @@ router.post('/disconnect', (ctx)=> {
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
-    let result_Disconnect = lib.PassThru_Disconnect(error_Disconnect, index);
+    let result_Disconnect = lib.PassThru_Disconnect(error_Disconnect, index,pChannelID);
+    console.log('pChannelID',pChannelID.deref());
     return ctx.body = result_Model(result_Disconnect, ref.readCString(error_Disconnect), '/disconnect');
 });
 
