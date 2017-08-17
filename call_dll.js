@@ -23,20 +23,20 @@ let int = ref.types.int;
 let ulong = ref.types.ulong;
 let ulongPtr = ref.refType(ulong);
 let PassThru_RegName = StructType({
-    Name:CString
+    Name: CString
 });
 let PassThru_RegName_ref = ref.refType(PassThru_RegName);
 let PassThru_RegInfo = StructType({
-    PassThruRegName:PassThru_RegName_ref,
-    Count:int
+    PassThruRegName: PassThru_RegName_ref,
+    Count: int
 });
 let PassThru_RegInfo_ref = ref.refType(PassThru_RegInfo);
 let lib = ffi.Library('./PassThru', {
     'PassThru_InquiryReg': [int, [CString]],
     'PassThru_InquiryIndex': [CString, [int]],
     'PassThru_LoadDLL': [int, [CString]],
-    'PassThru_Open': [int, [CString]],
-    'PassThru_Connect': [int, [CString, int, ulong, ulong, ulong]],
+    'PassThru_Open': [int, [CString, int]],
+    'PassThru_Connect': [int, [CString, int, ulongPtr, ulong, ulong, ulong]],
     'PassThru_Ioctl': [int, [CString, int, ulong]],
     'PassThru_StartMsgFilter': [int, [CString, int, ulong]],
     'PassThru_WriteMsgs': [int, [CString, int, CString, ulong]],
@@ -126,7 +126,7 @@ router.post('/getData', (ctx)=> {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
     let result_getData = lib.PassThru_InquiryIndex(index);
-    return ctx.body = result_Model(result_getData,'', '/getData');
+    return ctx.body = result_Model(result_getData, '', '/getData');
 });
 // 加载动态库
 router.post('/load', (ctx)=> {
@@ -147,7 +147,11 @@ router.post('/open', (ctx)=> {
      * @param  {[string]} error_open      [错误信息]
      * @return 设备数量
      */
-    let result_open = lib.PassThru_Open(error_open);
+    let {index} = ctx.request.body;
+    if (!index && index !== 0) {
+        return ctx.body = miss_arg('缺少参数 index [Index索引]');
+    }
+    let result_open = lib.PassThru_Open(error_open, index);
     return ctx.body = result_Model(result_open, ref.readCString(error_open), '/open');
 });
 
@@ -158,17 +162,19 @@ router.post('/connect', (ctx)=> {
      *
      * @param  {[string]} error_connect      [错误信息]
      * @param  {[int]} index      [Index索引]
+     * @param  {[int]} index      [Index索引]
      * @param  {[int]} protocolID      [protocolID默认6]
      * @param  {[int]} flags      [Flags默认0]
      * @param  {[int]} baudRate      [BaudRate500000]
      * @return 0成功 非0失败
      */
-
+    let pChannelID;
     let {index, protocolID, flags, baudRate} = ctx.request.body;
     if (!index && index !== 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
-    let result_connect = lib.PassThru_Connect(error_connect, index, protocolID = 6, flags = 0, baudRate = 500000);
+    let result_connect = lib.PassThru_Connect(error_connect, index, pChannelID, protocolID = 6, flags = 0, baudRate = 500000);
+    console.log('pChannelID', pChannelID);
     return ctx.body = result_Model(result_connect, ref.readCString(error_connect), '/connect');
 });
 // IO配置设备
@@ -288,35 +294,35 @@ router.post('/ready', (ctx)=> {
     let error_load = new Buffer(250);
     let error_open = new Buffer(250);
     let result_reg = lib.PassThru_InquiryReg(error_reg);
-    if(ref.readCString(error_reg)){
+    if (ref.readCString(error_reg)) {
         winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_reg)}`);
         return ctx.body = {
-            status:500,
-            errorMsg:ref.readCString(error_reg)
+            status: 500,
+            errorMsg: ref.readCString(error_reg)
         }
     }
     let result_load = lib.PassThru_LoadDLL(error_load);
-    if(ref.readCString(error_load)){
+    if (ref.readCString(error_load)) {
         winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_load)}`);
         return ctx.body = {
-            status:500,
-            errorMsg:ref.readCString(error_load)
+            status: 500,
+            errorMsg: ref.readCString(error_load)
         }
     }
     let result_open = lib.PassThru_Open(error_open);
-    if(ref.readCString(error_open)){
+    if (ref.readCString(error_open)) {
         winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_open)}`);
         return ctx.body = {
-            status:500,
-            errorMsg:ref.readCString(error_open)
+            status: 500,
+            errorMsg: ref.readCString(error_open)
         }
     }
-    return ctx.body ={
-        status:200,
-        data:{
-            result_reg:result_reg,
-            result_load:result_load,
-            result_open:result_open
+    return ctx.body = {
+        status: 200,
+        data: {
+            result_reg: result_reg,
+            result_load: result_load,
+            result_open: result_open
         }
     }
 });
@@ -338,32 +344,32 @@ router.post('/startUp', (ctx)=> {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
     let result_connect = lib.PassThru_Connect(error_connect, index, protocolID = 6, flags = 0, baudRate = 500000);
-    if(ref.readCString(error_connect)){
+    if (ref.readCString(error_connect)) {
         winston.error(`call /startUp resful,error with call dll ---- ${ref.readCString(error_connect)}`);
         return ctx.body = {
-            status:500,
-            errorMsg:ref.readCString(error_connect)
+            status: 500,
+            errorMsg: ref.readCString(error_connect)
         }
     }
     let result_ioctl = lib.PassThru_Ioctl(error_ioctl, index, ioctlID = 2);
-    if(ref.readCString(error_ioctl)){
+    if (ref.readCString(error_ioctl)) {
         winston.error(`call /startUp resful,error with call dll ---- ${ref.readCString(error_ioctl)}`);
         return ctx.body = {
-            status:500,
-            errorMsg:ref.readCString(error_ioctl)
+            status: 500,
+            errorMsg: ref.readCString(error_ioctl)
         }
     }
     let result_StartMsgFilter = lib.PassThru_StartMsgFilter(error_StartMsgFilter, index, filterType = 3);
-    if(ref.readCString(error_StartMsgFilter)){
+    if (ref.readCString(error_StartMsgFilter)) {
         winston.error(`call /startUp resful,error with call dll ---- ${ref.readCString(error_StartMsgFilter)}`);
         return ctx.body = {
-            status:500,
-            errorMsg:ref.readCString(error_StartMsgFilter)
+            status: 500,
+            errorMsg: ref.readCString(error_StartMsgFilter)
         }
     }
     return ctx.body = {
-        status:200,
-        data:{
+        status: 200,
+        data: {
             result_connect: result_connect,
             result_ioctl: result_ioctl,
             result_StartMsgFilter: result_StartMsgFilter
@@ -386,26 +392,26 @@ router.post('/end', (ctx)=> {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
     let result_StopMsgFilter = lib.PassThru_StopMsgFilter(error_StopMsgFilter, index);
-    if(ref.readCString(error_StopMsgFilter)){
+    if (ref.readCString(error_StopMsgFilter)) {
         winston.error(`call /end resful,error with call dll ---- ${ref.readCString(error_StopMsgFilter)}`);
         return ctx.body = {
-            status:500,
-            errorMsg:ref.readCString(error_StopMsgFilter)
+            status: 500,
+            errorMsg: ref.readCString(error_StopMsgFilter)
         }
     }
     let result_Disconnect = lib.PassThru_Disconnect(error_Disconnect, index);
-    if(ref.readCString(error_Disconnect)){
+    if (ref.readCString(error_Disconnect)) {
         winston.error(`call /end resful,error with call dll ---- ${ref.readCString(error_Disconnect)}`);
         return ctx.body = {
-            status:500,
-            errorMsg:ref.readCString(error_Disconnect)
+            status: 500,
+            errorMsg: ref.readCString(error_Disconnect)
         }
     }
     return ctx.body = {
-        status:200,
-        data:{
-            result_StopMsgFilter:result_StopMsgFilter,
-            result_Disconnect:result_Disconnect
+        status: 200,
+        data: {
+            result_StopMsgFilter: result_StopMsgFilter,
+            result_Disconnect: result_Disconnect
         }
     }
 });
