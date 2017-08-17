@@ -168,13 +168,13 @@ router.post('/connect', (ctx)=> {
      * @param  {[int]} baudRate      [BaudRate500000]
      * @return 0成功 非0失败
      */
-    let pChannelID;
+    let pChannelID = ref.alloc(ulong);
     let {index, protocolID, flags, baudRate} = ctx.request.body;
     if (!index && index !== 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
     let result_connect = lib.PassThru_Connect(error_connect, index, pChannelID, protocolID = 6, flags = 0, baudRate = 500000);
-    console.log('pChannelID', pChannelID);
+    console.log('pChannelID', pChannelID.deref());
     return ctx.body = result_Model(result_connect, ref.readCString(error_connect), '/connect');
 });
 // IO配置设备
