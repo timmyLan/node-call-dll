@@ -31,8 +31,9 @@ let PassThru_RegInfo = StructType({
     Count:int
 });
 let PassThru_RegInfo_ref = ref.refType(PassThru_RegInfo);
-let lib = ffi.Library('./PassThrough', {
-    'PassThru_InquiryReg': [PassThru_RegInfo_ref, [CString]],
+let lib = ffi.Library('./PassThru', {
+    'PassThru_InquiryReg': [int, [CString]],
+    'PassThru_InquiryIndex': [CString, [int]],
     'PassThru_LoadDLL': [int, [CString]],
     'PassThru_Open': [int, [CString]],
     'PassThru_Connect': [int, [CString, int, ulong, ulong, ulong]],
@@ -111,8 +112,21 @@ router.post('/reg', (ctx)=> {
      * @return 注册表数目
      */
     let result_reg = lib.PassThru_InquiryReg(error_reg);
-    console.log('reg',result_reg);
     return ctx.body = result_Model(result_reg, ref.readCString(error_reg), '/reg');
+});
+// 获取索引信息
+router.post('/getData', (ctx)=> {
+    /**
+     *
+     * @param  {[string]} error_load      [错误信息]
+     * @return 注册表数目
+     */
+    let {index} = ctx.request.body;
+    if (!index && index !== 0) {
+        return ctx.body = miss_arg('缺少参数 index [Index索引]');
+    }
+    let result_getData = lib.PassThru_InquiryIndex(index);
+    return ctx.body = result_Model(result_getData,'', '/getData');
 });
 // 加载动态库
 router.post('/load', (ctx)=> {
