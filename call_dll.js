@@ -14,38 +14,28 @@ app.use(views(path.join(__dirname, 'public'), {map: {html: 'nunjucks'}}));
 app.use(koaBody());
 app.use(require('koa-static')(path.join(__dirname, 'public')));
 
+
 //ffi
 const ffi = require('ffi');
 const ref = require('ref');
-var StructType = require('ref-struct');
 let CString = ref.types.CString;
 let int = ref.types.int;
+let intPtr = ref.refType(int);
 let voidType = ref.types.void;
 let ulong = ref.types.ulong;
 let ulongPtr = ref.refType(ulong);
-let PassThru_RegName = StructType({
-    Name: CString
-});
-let PassThru_RegName_ref = ref.refType(PassThru_RegName);
-let PassThru_RegInfo = StructType({
-    PassThruRegName: PassThru_RegName_ref,
-    Count: int
-});
-let PassThru_RegInfo_ref = ref.refType(PassThru_RegInfo);
-let pChannelID = ref.alloc(ulong);
-let pFilterID = ref.alloc(ulong);
 let lib = ffi.Library('./PassThru', {
     'PassThru_InquiryReg': [int, [CString]],
     'PassThru_InquiryIndex': [CString, [int]],
     'PassThru_LoadDLL': [int, [CString]],
     'PassThru_Open': [int, [CString, int]],
     'PassThru_Connect': [int, [CString, int, ulongPtr, ulong, ulong, ulong]],
-    'PassThru_Ioctl': [int, [CString, int,ulongPtr, ulong]],
-    'PassThru_StartMsgFilter': [int, [CString, int,ulongPtr,ulongPtr, ulong]],
-    'PassThru_WriteMsgs': [int, [CString, int, CString, ulong]],
-    'PassThru_ReadMsgs': [int, [CString, int, CString, ulongPtr, ulong]],
-    'PassThru_StopMsgFilter': [int, [CString, int,ulongPtr,ulongPtr]],
-    'PassThru_Disconnect': [int, [CString, int,ulongPtr]],
+    'PassThru_Ioctl': [int, [CString, int,ulong, ulong]],
+    'PassThru_StartMsgFilter': [int, [CString, int,ulong,ulongPtr, ulong]],
+    'PassThru_WriteMsgs': [int, [CString, int,ulong, CString,intPtr, ulong]],
+    'PassThru_ReadMsgs': [int, [CString, int,ulong, CString,intPtr, ulong, ulong]],
+    'PassThru_StopMsgFilter': [int, [CString, int,ulong,ulong]],
+    'PassThru_Disconnect': [int, [CString, int,ulong]],
     'PassThru_Close': [int, [CString,int]],
     'PassThru_Delete': [voidType, []]
 });
@@ -59,6 +49,13 @@ winston.configure({
         })
     ]
 });
+//redis
+let createClient = require('then-redis').createClient;
+let client = createClient();
+client.on("error", function (err) {
+    console.log("Error " + err);
+});
+
 /**
  * resful返回信息模板
  * @param  {[type]} data     [调用dll返回结果]
@@ -123,7 +120,7 @@ router.post('/getData', (ctx)=> {
     /**
      *
      * @param  {[string]} error_load      [错误信息]
-     * @return 注册表数目
+     * @return 注册表信息
      */
     let {index} = ctx.request.body;
     if (!index && index !== 0) {
@@ -160,7 +157,7 @@ router.post('/open', (ctx)=> {
 });
 
 // 链接设备
-router.post('/connect', (ctx)=> {
+router.post('/connect', async(ctx)=> {
     let error_connect = new Buffer(250);
     /**
      *
@@ -176,12 +173,15 @@ router.post('/connect', (ctx)=> {
     if (!index && index !== 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
+    let pChannelID = ref.alloc(ulong);
     let result_connect = lib.PassThru_Connect(error_connect, index, pChannelID, protocolID = 6, flags = 0, baudRate = 500000);
-    console.log('pChannelID', pChannelID.deref());
+    let pChannelID_deref = pChannelID.deref();
+    await client.sadd(`passThruConnect${index}`,pChannelID_deref);
+    await client.set(`passThruConnect${index}_lastest_pChannelID`,pChannelID_deref);
     return ctx.body = result_Model(result_connect, ref.readCString(error_connect), '/connect');
 });
 // IO配置设备
-router.post('/ioctl', (ctx)=> {
+router.post('/ioctl', async(ctx)=> {
     let error_ioctl = new Buffer(250);
     /**
      *
@@ -194,11 +194,12 @@ router.post('/ioctl', (ctx)=> {
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
+    let pChannelID = await client.get(`passThruConnect${index}_lastest_pChannelID`);
     let result_ioctl = lib.PassThru_Ioctl(error_ioctl, index,pChannelID, ioctlID = 2);
     return ctx.body = result_Model(result_ioctl, ref.readCString(error_ioctl), '/ioctl');
 });
 // 配置过虑器
-router.post('/startMsgFilter', (ctx)=> {
+router.post('/startMsgFilter', async(ctx)=> {
     let error_StartMsgFilter = new Buffer(250);
     /**
      *
@@ -211,14 +212,17 @@ router.post('/startMsgFilter', (ctx)=> {
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
+    let pChannelID = await client.get(`passThruConnect${index}_lastest_pChannelID`);
+    let pFilterID = ref.alloc(ulong);
     let result_StartMsgFilter = lib.PassThru_StartMsgFilter(error_StartMsgFilter, index, pChannelID,pFilterID,filterType = 3);
-    console.log('pChannelID',pChannelID.deref());
-    console.log('pFilterID',pFilterID.deref());
+    let pFilterID_deref = pFilterID.deref();
+    await client.sadd(`startMsgFilter${index}`,pFilterID_deref);
+    await client.set(`startMsgFilter${index}_lastest_pFilterID`,pFilterID_deref);
     return ctx.body = result_Model(result_StartMsgFilter, ref.readCString(error_StartMsgFilter), '/startMsgFilter');
 });
 
 // 发送
-router.post('/writeMsgs', (ctx)=> {
+router.post('/writeMsgs', async(ctx)=> {
     let error_WriteMsgs = new Buffer(250);
     let msg_WriteMsgs = new Buffer(250);
     /**
@@ -237,11 +241,13 @@ router.post('/writeMsgs', (ctx)=> {
         return ctx.body = miss_arg('缺少参数 writeMsgs [Message要发送的字符串]');
     }
     msg_WriteMsgs = writeMsgs;
-    let result_WriteMsgs = lib.PassThru_WriteMsgs(error_WriteMsgs, index, msg_WriteMsgs, timeout = 1000);
+    let length = ref.alloc(int);
+    let pChannelID = await client.get(`passThruConnect${index}_lastest_pChannelID`);
+    let result_WriteMsgs = lib.PassThru_WriteMsgs(error_WriteMsgs, index,pChannelID, msg_WriteMsgs,length, timeout = 1000);
     return ctx.body = result_Model(result_WriteMsgs, ref.readCString(error_WriteMsgs), '/writeMsgs');
 });
 // 接收
-router.post('/readMsgs', (ctx)=> {
+router.post('/readMsgs', async(ctx)=> {
     let error_ReadMsgs = new Buffer(250);
     let msg_ReadMsgs = new Buffer(250);
     /**
@@ -258,15 +264,17 @@ router.post('/readMsgs', (ctx)=> {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
     let result_ReadMsgs;
+    let length = ref.alloc(int);
+    let pChannelID = await client.get(`passThruConnect${index}_lastest_pChannelID`);
     do {
-        result_ReadMsgs = lib.PassThru_ReadMsgs(error_ReadMsgs, index, msg_ReadMsgs, pNumMsgs = null, timeout = 1000);
+        result_ReadMsgs = lib.PassThru_ReadMsgs(error_ReadMsgs, index,pChannelID, msg_ReadMsgs,length, pNumMsgs=null, timeout = 1000);
         ref.writeCString(error_ReadMsgs, 0, '');
     } while (result_ReadMsgs === 29 || result_ReadMsgs === 30);
     console.log('msg_ReadMsgs', ref.readCString(msg_ReadMsgs));
     return ctx.body = result_Model(result_ReadMsgs, ref.readCString(error_ReadMsgs), '/readMsgs');
 });
 // 删除过虑器
-router.post('/stopMsgFilter', (ctx)=> {
+router.post('/stopMsgFilter', async(ctx)=> {
     let error_StopMsgFilter = new Buffer(250);
     /**
      *
@@ -278,29 +286,43 @@ router.post('/stopMsgFilter', (ctx)=> {
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
+    let pChannelID = await client.get(`passThruConnect${index}_lastest_pChannelID`);
+    let pFilterID = await client.get(`startMsgFilter${index}_lastest_pFilterID`);
     let result_StopMsgFilter = lib.PassThru_StopMsgFilter(error_StopMsgFilter, index ,pChannelID,pFilterID);
-    console.log('pChannelID',pChannelID.deref());
-    console.log('pFilterID',pFilterID.deref());
     return ctx.body = result_Model(result_StopMsgFilter, ref.readCString(error_StopMsgFilter), '/stopMsgFilter');
 });
 // 断开指定连接
-router.post('/disconnect', (ctx)=> {
+router.post('/disconnect', async(ctx)=> {
     let error_Disconnect = new Buffer(250);
     let {index} = ctx.request.body;
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
+    let pChannelID = await client.get(`passThruConnect${index}_lastest_pChannelID`);
     let result_Disconnect = lib.PassThru_Disconnect(error_Disconnect, index,pChannelID);
-    console.log('pChannelID',pChannelID.deref());
     return ctx.body = result_Model(result_Disconnect, ref.readCString(error_Disconnect), '/disconnect');
 });
 
+// 关闭指定设备
+router.post('/passThru_Close', (ctx)=> {
+    let error_Close = new Buffer(250);
+    /**
+     *
+     * @param  {[string]} error_Close      [错误信息]
+     * @return 设备数量
+     */
+    let {index} = ctx.request.body;
+    if (!index && index != 0) {
+        return ctx.body = miss_arg('缺少参数 index [Index索引]');
+    }
+    let result_Close = lib.PassThru_Close(error_Close,index);
+    return ctx.body = result_Model(result_Close, ref.readCString(error_Close), '/passThru_Close');
+});
 
-// 统一操作(获取注册表信息&加载动态库&检测设备数量)
+// 统一操作(获取注册表信息&加载动态库)
 router.post('/ready', (ctx)=> {
     let error_reg = new Buffer(250);
     let error_load = new Buffer(250);
-    let error_open = new Buffer(250);
     let result_reg = lib.PassThru_InquiryReg(error_reg);
     if (ref.readCString(error_reg)) {
         winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_reg)}`);
@@ -317,26 +339,18 @@ router.post('/ready', (ctx)=> {
             errorMsg: ref.readCString(error_load)
         }
     }
-    let result_open = lib.PassThru_Open(error_open);
-    if (ref.readCString(error_open)) {
-        winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_open)}`);
-        return ctx.body = {
-            status: 500,
-            errorMsg: ref.readCString(error_open)
-        }
-    }
     return ctx.body = {
         status: 200,
         data: {
             result_reg: result_reg,
-            result_load: result_load,
-            result_open: result_open
+            result_load: result_load
         }
     }
 });
 
 //统一操作(链接设备&IO配置设备&配置过虑器)
-router.post('/startUp', (ctx)=> {
+router.post('/start', async(ctx)=> {
+    let error_open = new Buffer(250);
     let error_connect = new Buffer(250);
     let error_ioctl = new Buffer(250);
     let error_StartMsgFilter = new Buffer(250);
@@ -351,7 +365,19 @@ router.post('/startUp', (ctx)=> {
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
-    let result_connect = lib.PassThru_Connect(error_connect, index, protocolID = 6, flags = 0, baudRate = 500000);
+    let result_open = lib.PassThru_Open(error_open,index);
+    if (ref.readCString(error_open)) {
+        winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_open)}`);
+        return ctx.body = {
+            status: 500,
+            errorMsg: ref.readCString(error_open)
+        }
+    }
+    let pChannelID = ref.alloc(ulong);
+    let result_connect = lib.PassThru_Connect(error_connect, index, pChannelID, protocolID = 6, flags = 0, baudRate = 500000);
+    let pChannelID_deref = pChannelID.deref();
+    await client.sadd(`passThruConnect${index}`,pChannelID_deref);
+    await client.set(`passThruConnect${index}_lastest_pChannelID`,pChannelID_deref);
     if (ref.readCString(error_connect)) {
         winston.error(`call /startUp resful,error with call dll ---- ${ref.readCString(error_connect)}`);
         return ctx.body = {
@@ -359,7 +385,8 @@ router.post('/startUp', (ctx)=> {
             errorMsg: ref.readCString(error_connect)
         }
     }
-    let result_ioctl = lib.PassThru_Ioctl(error_ioctl, index, ioctlID = 2);
+    let pChannelID_lastest = await client.get(`passThruConnect${index}_lastest_pChannelID`);
+    let result_ioctl = lib.PassThru_Ioctl(error_ioctl, index,pChannelID_lastest, ioctlID = 2);
     if (ref.readCString(error_ioctl)) {
         winston.error(`call /startUp resful,error with call dll ---- ${ref.readCString(error_ioctl)}`);
         return ctx.body = {
@@ -367,7 +394,11 @@ router.post('/startUp', (ctx)=> {
             errorMsg: ref.readCString(error_ioctl)
         }
     }
-    let result_StartMsgFilter = lib.PassThru_StartMsgFilter(error_StartMsgFilter, index, filterType = 3);
+    let pFilterID = ref.alloc(ulong);
+    let result_StartMsgFilter = lib.PassThru_StartMsgFilter(error_StartMsgFilter, index, pChannelID_lastest,pFilterID,filterType = 3);
+    let pFilterID_deref = pFilterID.deref();
+    await client.sadd(`startMsgFilter${index}`,pFilterID_deref);
+    await client.set(`startMsgFilter${index}_lastest_pFilterID`,pFilterID_deref);
     if (ref.readCString(error_StartMsgFilter)) {
         winston.error(`call /startUp resful,error with call dll ---- ${ref.readCString(error_StartMsgFilter)}`);
         return ctx.body = {
@@ -385,10 +416,12 @@ router.post('/startUp', (ctx)=> {
     };
 });
 
-//统一操作(删除过虑器&断开指定连接)
-router.post('/end', (ctx)=> {
+//统一操作(删除过虑器&断开指定连接&关闭指定设备)
+router.post('/end', async(ctx)=> {
     let error_StopMsgFilter = new Buffer(250);
     let error_Disconnect = new Buffer(250);
+    let error_Close = new Buffer(250);
+
     /**
      *
      * @param  {[string]} error_Disconnect      [错误信息]
@@ -399,7 +432,9 @@ router.post('/end', (ctx)=> {
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
-    let result_StopMsgFilter = lib.PassThru_StopMsgFilter(error_StopMsgFilter, index);
+    let pChannelID = await client.get(`passThruConnect${index}_lastest_pChannelID`);
+    let pFilterID = await client.get(`startMsgFilter${index}_lastest_pFilterID`);
+    let result_StopMsgFilter = lib.PassThru_StopMsgFilter(error_StopMsgFilter, index ,pChannelID,pFilterID);
     if (ref.readCString(error_StopMsgFilter)) {
         winston.error(`call /end resful,error with call dll ---- ${ref.readCString(error_StopMsgFilter)}`);
         return ctx.body = {
@@ -407,7 +442,7 @@ router.post('/end', (ctx)=> {
             errorMsg: ref.readCString(error_StopMsgFilter)
         }
     }
-    let result_Disconnect = lib.PassThru_Disconnect(error_Disconnect, index);
+    let result_Disconnect = lib.PassThru_Disconnect(error_Disconnect, index,pChannelID);
     if (ref.readCString(error_Disconnect)) {
         winston.error(`call /end resful,error with call dll ---- ${ref.readCString(error_Disconnect)}`);
         return ctx.body = {
@@ -415,27 +450,34 @@ router.post('/end', (ctx)=> {
             errorMsg: ref.readCString(error_Disconnect)
         }
     }
+    let result_Close = lib.PassThru_Close(error_Close,index);
+    if (ref.readCString(error_Close)) {
+        winston.error(`call /end resful,error with call dll ---- ${ref.readCString(error_Close)}`);
+        return ctx.body = {
+            status: 500,
+            errorMsg: ref.readCString(error_Close)
+        }
+    }
     return ctx.body = {
         status: 200,
         data: {
             result_StopMsgFilter: result_StopMsgFilter,
-            result_Disconnect: result_Disconnect
+            result_Disconnect: result_Disconnect,
+            result_Close:result_Close
         }
     }
 });
 
-// 关闭设备
-router.post('/passThru_Close', (ctx)=> {
-    let error_Close = new Buffer(250);
-    /**
-     *
-     * @param  {[string]} error_Close      [错误信息]
-     * @return 设备数量
-     */
 
-    let result_Close = lib.PassThru_Close(error_Close);
-    return ctx.body = result_Model(result_Close, ref.readCString(error_Close), '/passThru_Close');
+// 关闭空间
+router.post('/passThru_Delete', (ctx)=> {
+    let result_Close = lib.PassThru_Delete();
+    return ctx.body = {
+        status:200,
+        data:''
+    }
 });
+
 let product = ffi.Library('./product', {
     'factorial': ['uint64', ['int']],
     'add': ['int', ['int', 'int']],
