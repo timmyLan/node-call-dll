@@ -156,7 +156,7 @@ router.post('/connect', async(ctx)=> {
      *
      * @param  {[string]} error_connect      [错误信息]
      * @param  {[int]} index      [Index索引]
-     * @param  {[int]} index      [Index索引]
+     * @param  {[intPtr]} pChannelID      [pChannelID要保存的ChannelID]
      * @param  {[int]} protocolID      [protocolID默认6]
      * @param  {[int]} flags      [Flags默认0]
      * @param  {[int]} baudRate      [BaudRate500000]
@@ -180,6 +180,7 @@ router.post('/ioctl', async(ctx)=> {
      *
      * @param  {[string]} error_ioctl      [错误信息]
      * @param  {[int]} index      [Index索引]
+     * @param  {[int]} pChannelID      [pChannelID连接指定设备后的ChannelID]
      * @param  {[int]} ioctlID      [ioctlID默认2]
      * @return 0成功 非0失败
      */
@@ -198,6 +199,8 @@ router.post('/startMsgFilter', async(ctx)=> {
      *
      * @param  {[string]} error_StartMsgFilter      [错误信息]
      * @param  {[int]} index      [Index索引]
+     * @param  {[int]} pChannelID      [pChannelID连接指定设备后的ChannelID]
+     * @param  {[intPtr]} pFilterID      [pFilterID要保存的FilterID]
      * @param  {[int]} filterType      [filterType默认3]
      * @return 0成功 非0失败
      */
@@ -222,6 +225,7 @@ router.post('/writeMsgs', async(ctx)=> {
      *
      * @param  {[string]} error_WriteMsgs      [错误信息]
      * @param  {[int]} index      [Index索引]
+     * @param  {[int]} pChannelID      [pChannelID连接指定设备后的ChannelID]
      * @param  {[string]} writeMsgs      [Message要发送的字符串]
      * @param  {[int]} timeout      [Timeout默认1000]
      * @return 0成功 非0失败
@@ -247,6 +251,7 @@ router.post('/readMsgs', async(ctx)=> {
      *
      * @param  {[string]} error_ReadMsgs      [错误信息]
      * @param  {[int]} index      [Index索引]
+     * @param  {[int]} pChannelID      [pChannelID连接指定设备后的ChannelID]
      * @param  {[string]} msg_ReadMsgs      [Message要接收的字符串]
      * @param  {[int]} pNumMsgs      [pNumMsgs接收字符串的数量默认为null]
      * @param  {[int]} timeout      [Timeout默认1000]
@@ -273,6 +278,8 @@ router.post('/stopMsgFilter', async(ctx)=> {
      *
      * @param  {[string]} error_StopMsgFilter      [错误信息]
      * @param  {[int]} index      [Index索引]
+     * @param  {[int]} pChannelID      [pChannelID连接指定设备后的ChannelID]
+     * @param  {[int]} pFilterID      [pFilterID要取消的FilterID]
      * @return 0成功 非0失败
      */
     let {index} = ctx.request.body;
