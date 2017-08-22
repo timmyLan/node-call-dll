@@ -32,7 +32,7 @@ let lib = ffi.Library('./PassThru', {
     'PassThru_Connect': [int, [CString, int, ulongPtr, ulong, ulong, ulong]],
     'PassThru_Ioctl': [int, [CString, int,ulong, ulong]],
     'PassThru_StartMsgFilter': [int, [CString, int,ulong,ulongPtr, ulong]],
-    'PassThru_WriteMsgs': [int, [CString, int,ulong, CString,intPtr, ulong]],
+    'PassThru_WriteMsgs': [int, [CString, int,ulong, CString,int, ulong]],
     'PassThru_ReadMsgs': [int, [CString, int,ulong, CString,intPtr, ulong, ulong]],
     'PassThru_StopMsgFilter': [int, [CString, int,ulong,ulong]],
     'PassThru_Disconnect': [int, [CString, int,ulong]],
@@ -110,24 +110,17 @@ router.post('/reg', (ctx)=> {
     /**
      *
      * @param  {[string]} error_load      [错误信息]
-     * @return 注册表数目
-     */
-    let result_reg = lib.PassThru_InquiryReg(error_reg);
-    return ctx.body = result_Model(result_reg, ref.readCString(error_reg), '/reg');
-});
-// 获取索引信息
-router.post('/getData', (ctx)=> {
-    /**
-     *
-     * @param  {[string]} error_load      [错误信息]
      * @return 注册表信息
      */
-    let {index} = ctx.request.body;
-    if (!index && index !== 0) {
-        return ctx.body = miss_arg('缺少参数 index [Index索引]');
+    let result_reg = lib.PassThru_InquiryReg(error_reg);
+    let data = {};
+    for(let i = 0;i<result_reg;i++){
+        data[i] = lib.PassThru_InquiryIndex(i);
     }
-    let result_getData = lib.PassThru_InquiryIndex(index);
-    return ctx.body = result_Model(result_getData, '', '/getData');
+    return ctx.body = result_Model({
+        count:result_reg,
+        data:data
+    }, ref.readCString(error_reg), '/reg');
 });
 // 加载动态库
 router.post('/load', (ctx)=> {
@@ -241,7 +234,7 @@ router.post('/writeMsgs', async(ctx)=> {
         return ctx.body = miss_arg('缺少参数 writeMsgs [Message要发送的字符串]');
     }
     msg_WriteMsgs = writeMsgs;
-    let length = ref.alloc(int);
+    let length = msg_WriteMsgs.length;
     let pChannelID = await client.get(`passThruConnect${index}_lastest_pChannelID`);
     let result_WriteMsgs = lib.PassThru_WriteMsgs(error_WriteMsgs, index,pChannelID, msg_WriteMsgs,length, timeout = 1000);
     return ctx.body = result_Model(result_WriteMsgs, ref.readCString(error_WriteMsgs), '/writeMsgs');
@@ -324,6 +317,10 @@ router.post('/ready', (ctx)=> {
     let error_reg = new Buffer(250);
     let error_load = new Buffer(250);
     let result_reg = lib.PassThru_InquiryReg(error_reg);
+    let data = {};
+    for(let i = 0;i<result_reg;i++){
+        data[i] = lib.PassThru_InquiryIndex(i);
+    }
     if (ref.readCString(error_reg)) {
         winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_reg)}`);
         return ctx.body = {
@@ -342,7 +339,10 @@ router.post('/ready', (ctx)=> {
     return ctx.body = {
         status: 200,
         data: {
-            result_reg: result_reg,
+            result_reg: {
+                count:result_reg,
+                data:data
+            },
             result_load: result_load
         }
     }
