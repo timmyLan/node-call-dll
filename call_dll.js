@@ -465,6 +465,8 @@ router.post('/end', async(ctx)=> {
             errorMsg: ref.readCString(error_Close)
         }
     }
+    await client.del(`passThruConnect${index}_lastest_pChannelID`);
+    await client.del(`startMsgFilter${index}_lastest_pFilterID`);
     return ctx.body = {
         status: 200,
         data: {

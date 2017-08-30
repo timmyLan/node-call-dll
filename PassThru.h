@@ -55,7 +55,7 @@ int WINAPI PassThru_Ioctl(char* ErrorMessage,unsigned int Index,unsigned long pC
 int WINAPI PassThru_StartMsgFilter(char* ErrorMessage,unsigned int Index,unsigned long pChannelID,unsigned long* pFilterID,unsigned long FilterType=FLOW_CONTROL_FILTER);
 
 	/*发送*/	/*形参 ErrorMessage保存出错信息 Index设备索引 pChannelID连接指定设备后的ChannelID Message要发送的信息 Length发送信息长度 Timeout默认1000 */							/*返回值 0成功 非0失败*/
-int WINAPI PassThru_WriteMsgs(char* ErrorMessage,unsigned int Index,unsigned long pChannelID,const char* Message,unsigned int Length,unsigned long Timeout=1000);
+int WINAPI PassThru_WriteMsgs(char* ErrorMessage,unsigned int Index,unsigned long pChannelID,const char* Message,unsigned int* Length,unsigned long Timeout=1000);
 
 	/*接收*/	/*形参 ErrorMessage保存出错信息 Index设备索引 pChannelID连接指定设备后的ChannelID Message要接收的信息 Length接收信息长度 pNumMsgs接收字符串的数量 Timeout默认1000 *//*返回值 0成功 非0失败*/
 int WINAPI PassThru_ReadMsgs(char* ErrorMessage,unsigned int Index,unsigned long pChannelID,char* Message,unsigned int* Length,unsigned long* pNumMsgs=NULL,unsigned long Timeout=1000);
