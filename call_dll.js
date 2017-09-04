@@ -139,7 +139,7 @@ const handleIndex = (index) => {
     return null;
 };
 //获取注册表信息
-router.post('/reg', (ctx) => {
+router.post('/ready', (ctx) => {
     let error_reg = new Buffer(250);
     /**
      *
@@ -397,7 +397,7 @@ router.post('/start', async(ctx) => {
     //加载动态库
     let result_load = lib.PassThru_LoadDLL(error_load, index);
     if (ref.readCString(error_load)) {
-        winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_load)}`);
+        winston.error(`call /start resful,error with call dll ---- ${ref.readCString(error_load)}`);
         return ctx.body = {
             status: 500,
             errorMsg: ref.readCString(error_load)
@@ -406,7 +406,7 @@ router.post('/start', async(ctx) => {
     //打开指定设备
     let result_open = lib.PassThru_Open(error_open, index);
     if (ref.readCString(error_open)) {
-        winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_open)}`);
+        winston.error(`call /start resful,error with call dll ---- ${ref.readCString(error_open)}`);
         return ctx.body = {
             status: 500,
             errorMsg: ref.readCString(error_open)
@@ -419,7 +419,7 @@ router.post('/start', async(ctx) => {
     await client.sadd(`passThruConnect${index}`, pChannelID_deref);
     await client.set(`passThruConnect${index}_lastest_pChannelID`, pChannelID_deref);
     if (ref.readCString(error_connect)) {
-        winston.error(`call /startUp resful,error with call dll ---- ${ref.readCString(error_connect)}`);
+        winston.error(`call /start resful,error with call dll ---- ${ref.readCString(error_connect)}`);
         return ctx.body = {
             status: 500,
             errorMsg: ref.readCString(error_connect)
@@ -429,7 +429,7 @@ router.post('/start', async(ctx) => {
     let pChannelID_lastest = await client.get(`passThruConnect${index}_lastest_pChannelID`);
     let result_ioctl = lib.PassThru_Ioctl(error_ioctl, index, pChannelID_lastest, ioctlID = 2);
     if (ref.readCString(error_ioctl)) {
-        winston.error(`call /startUp resful,error with call dll ---- ${ref.readCString(error_ioctl)}`);
+        winston.error(`call /start resful,error with call dll ---- ${ref.readCString(error_ioctl)}`);
         return ctx.body = {
             status: 500,
             errorMsg: ref.readCString(error_ioctl)
@@ -442,7 +442,7 @@ router.post('/start', async(ctx) => {
     await client.sadd(`startMsgFilter${index}`, pFilterID_deref);
     await client.set(`startMsgFilter${index}_lastest_pFilterID`, pFilterID_deref);
     if (ref.readCString(error_StartMsgFilter)) {
-        winston.error(`call /startUp resful,error with call dll ---- ${ref.readCString(error_StartMsgFilter)}`);
+        winston.error(`call /start resful,error with call dll ---- ${ref.readCString(error_StartMsgFilter)}`);
         return ctx.body = {
             status: 500,
             errorMsg: ref.readCString(error_StartMsgFilter)
