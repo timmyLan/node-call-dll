@@ -33,16 +33,20 @@ struct PassThru_LibraryList
 	unsigned long* DeviceID;
 	unsigned int Count;
 };
-	/*获取注册表信息并初始化储存空间*/		/*形参 ErrorMessage保存出错信息*/					/*返回值 注册表项数*/
+enum Enum
+{
+	OutsideBounds=0X1B,DataNull,ReadIndication,pMaskMsg,pPatternMsg,pFlowControlMsg,PowerState,
+};
+	/*获取注册表信息并初始化储存空间*/		/*无形参*/											/*返回值 注册表项数*/
 int WINAPI PassThru_InquiryReg(void);
 
 	/*获取索引信息*/						/*形参 Index设备索引*/								/*返回值 设备名*/
 char* WINAPI PassThru_InquiryIndex(unsigned int Index);
 
-	/*加载动态库*/							/*形参 ErrorMessage保存出错信息*/					/*返回值 成功加载动态库数目*/
-int WINAPI PassThru_LoadDLL(char* ErrorMessage);
+	/*加载指定动态库*/						/*形参 ErrorMessage保存出错信息 Index设备索引*/		/*返回值 0成功 非0失败*/
+int WINAPI PassThru_LoadDLL(char* ErrorMessage,unsigned int Index);
 
-	/*打开指定设备*/						/*形参 Index设备索引 ErrorMessage保存出错信息*/		/*返回值 0成功 非0失败*/
+	/*打开指定设备*/						/*形参 ErrorMessage保存出错信息 Index设备索引*/		/*返回值 0成功 非0失败*/
 int WINAPI PassThru_Open(char* ErrorMessage,unsigned int Index);
 
 	/*连接指定设备 获取ChannelID*/			/*形参 ErrorMessage保存出错信息 Index设备索引 pChannelID要保存的ChannelID ProtocolID默认6 Flags默认0 BaudRate默认500000*/		/*返回值 0成功 非0失败*/
@@ -55,7 +59,7 @@ int WINAPI PassThru_Ioctl(char* ErrorMessage,unsigned int Index,unsigned long pC
 int WINAPI PassThru_StartMsgFilter(char* ErrorMessage,unsigned int Index,unsigned long pChannelID,unsigned long* pFilterID,unsigned long FilterType=FLOW_CONTROL_FILTER);
 
 	/*发送*/	/*形参 ErrorMessage保存出错信息 Index设备索引 pChannelID连接指定设备后的ChannelID Message要发送的信息 Length发送信息长度 Timeout默认1000 */							/*返回值 0成功 非0失败*/
-int WINAPI PassThru_WriteMsgs(char* ErrorMessage,unsigned int Index,unsigned long pChannelID,const char* Message,unsigned int* Length,unsigned long Timeout=1000);
+int WINAPI PassThru_WriteMsgs(char* ErrorMessage,unsigned int Index,unsigned long pChannelID,const char* Message,unsigned int Length,unsigned long Timeout=1000);
 
 	/*接收*/	/*形参 ErrorMessage保存出错信息 Index设备索引 pChannelID连接指定设备后的ChannelID Message要接收的信息 Length接收信息长度 pNumMsgs接收字符串的数量 Timeout默认1000 *//*返回值 0成功 非0失败*/
 int WINAPI PassThru_ReadMsgs(char* ErrorMessage,unsigned int Index,unsigned long pChannelID,char* Message,unsigned int* Length,unsigned long* pNumMsgs=NULL,unsigned long Timeout=1000);
@@ -69,5 +73,8 @@ int WINAPI PassThru_Disconnect(char* ErrorMessage,unsigned int Index,unsigned lo
 	/*关闭指定设备*/	/*形参 ErrorMessage保存出错信息 Index设备索引*/					/*返回值 0成功 非0失败*/
 int WINAPI PassThru_Close(char* ErrorMessage,unsigned int Index);
 
-	/*释放空间*/		/*形参 无*/											/*返回值 无*/
+	/*卸载指定动态库*/						/*形参 Index设备索引*/		/*返回值 无*/
+void WINAPI PassThru_UnLoadDLL(unsigned int Index);
+
+	/*释放空间*/		/*形参 无*/														/*返回值 无*/
 void WINAPI PassThru_Delete(void);

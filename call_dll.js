@@ -27,7 +27,7 @@ let ulongPtr = ref.refType(ulong);
 let lib = ffi.Library('./PassThru', {
     'PassThru_InquiryReg': [int, [CString]],
     'PassThru_InquiryIndex': [CString, [int]],
-    'PassThru_LoadDLL': [int, [CString]],
+    'PassThru_LoadDLL': [int, [CString,int]],
     'PassThru_Open': [int, [CString, int]],
     'PassThru_Connect': [int, [CString, int, ulongPtr, ulong, ulong, ulong]],
     'PassThru_Ioctl': [int, [CString, int,ulong, ulong]],
@@ -37,6 +37,7 @@ let lib = ffi.Library('./PassThru', {
     'PassThru_StopMsgFilter': [int, [CString, int,ulong,ulong]],
     'PassThru_Disconnect': [int, [CString, int,ulong]],
     'PassThru_Close': [int, [CString,int]],
+    'PassThru_Close': [voidType, [int]],
     'PassThru_Delete': [voidType, []]
 });
 //logs
@@ -122,6 +123,16 @@ const miss_arg = (miss_errorMsg)=> {
         errorMsg: miss_errorMsg
     }
 }
+const handleIndex = (ctx) =>{
+    let {index} = ctx.request.body;
+    if (!index && index !== 0) {
+        return ctx.body = miss_arg('缺少参数 index [Index索引]');
+    }
+    let resultCompare = compareConfig(index);
+    if(resultCompare){
+        return ctx.body = resultCompare;
+    }
+}
 //获取注册表信息
 router.post('/reg', (ctx)=> {
     let error_reg = new Buffer(250);
@@ -148,7 +159,9 @@ router.post('/load', (ctx)=> {
      * @param  {[string]} error_load      [错误信息]
      * @return 成功加载动态库数目
      */
-    let result_load = lib.PassThru_LoadDLL(error_load);
+    let {index} = ctx.request.body;
+    handleIndex(ctx);
+    let result_load = lib.PassThru_LoadDLL(error_load,index);
     return ctx.body = result_Model(result_load, ref.readCString(error_load), '/load');
 });
 // 检测设备数量
