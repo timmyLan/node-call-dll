@@ -35,7 +35,7 @@ struct PassThru_LibraryList
 };
 enum Enum
 {
-	OutsideBounds=0X1B,DataNull,ReadIndication,pMaskMsg,pPatternMsg,pFlowControlMsg,PowerState,
+	OutsideBounds=0X1B,DataNull,ErrorMessageNull,ReadIndication,pMaskMsg,pPatternMsg,pFlowControlMsg,PowerState,
 };
 	/*获取注册表信息并初始化储存空间*/		/*无形参*/											/*返回值 注册表项数*/
 int WINAPI PassThru_InquiryReg(void);
