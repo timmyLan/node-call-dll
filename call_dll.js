@@ -64,8 +64,7 @@ let deviceConfig = require('./deviceConfig.json');
  */
 const compareConfig = (index)=>{
     let keys = Object.keys(deviceConfig);
-    console.log('keys',keys);
-    if(keys.indexOf(index) < 0 ){
+    if(keys.indexOf(index.toString()) < 0 ){
         winston.error(`config ${index} is not in deviceConfig`);
         return {
             stauts:500,
