@@ -71,7 +71,7 @@ const compareConfig = (index)=>{
             stauts:500,
             errorMsg: `config ${index} is not in deviceConfig`
         }
-    }else {
+    }else{
         return null;
     }
 };
@@ -113,7 +113,7 @@ const checkType = (target_type, data, dataName)=> {
     }
 };
 /**
- * 参数
+ * 缺失参数
  * @param  {[string]} miss_errorMsg  [错误信息]
  * @return {[type]}               [description]
  */
@@ -123,16 +123,21 @@ const miss_arg = (miss_errorMsg)=> {
         errorMsg: miss_errorMsg
     }
 }
-const handleIndex = (ctx) =>{
-    let {index} = ctx.request.body;
-    if (!index && index !== 0) {
-        return ctx.body = miss_arg('缺少参数 index [Index索引]');
+/**
+ * 检测index方法
+ * @param  {[type]} index [Index索引]
+ * @return {[type]}       [description]
+ */
+const handleIndex = (index) =>{
+     if (!index && index !== 0) {
+        return miss_arg('缺少参数 index [Index索引]');
     }
     let resultCompare = compareConfig(index);
     if(resultCompare){
-        return ctx.body = resultCompare;
+        return resultCompare;
     }
-}
+    return null;
+};
 //获取注册表信息
 router.post('/reg', (ctx)=> {
     let error_reg = new Buffer(250);
@@ -142,13 +147,8 @@ router.post('/reg', (ctx)=> {
      * @return 注册表信息
      */
     let result_reg = lib.PassThru_InquiryReg(error_reg);
-    // let data = {};
-    // for(let i = 0;i<result_reg;i++){
-    //     data[i] = lib.PassThru_InquiryIndex(i);
-    // }
     return ctx.body = result_Model({
-        count:result_reg,
-        // data:data
+        count:result_reg
     }, ref.readCString(error_reg), '/reg');
 });
 // 加载动态库
@@ -160,7 +160,10 @@ router.post('/load', (ctx)=> {
      * @return 成功加载动态库数目
      */
     let {index} = ctx.request.body;
-    handleIndex(ctx);
+    let result_handleIndex = handleIndex(index);
+    if(result_handleIndex){
+        return ctx.body = result_handleIndex;
+    }
     let result_load = lib.PassThru_LoadDLL(error_load,index);
     return ctx.body = result_Model(result_load, ref.readCString(error_load), '/load');
 });
@@ -173,12 +176,9 @@ router.post('/open', (ctx)=> {
      * @return 设备数量
      */
     let {index} = ctx.request.body;
-    if (!index && index !== 0) {
-        return ctx.body = miss_arg('缺少参数 index [Index索引]');
-    }
-    let resultCompare = compareConfig(index);
-    if(resultCompare){
-        return ctx.body = resultCompare;
+    let result_handleIndex = handleIndex(index);
+    if(result_handleIndex){
+        return ctx.body = result_handleIndex;
     }
     let result_open = lib.PassThru_Open(error_open, index);
     return ctx.body = result_Model(result_open, ref.readCString(error_open), '/open');
