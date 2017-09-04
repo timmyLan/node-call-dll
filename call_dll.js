@@ -122,24 +122,24 @@ const miss_arg = (miss_errorMsg)=> {
         errorMsg: miss_errorMsg
     }
 }
-// 获取注册表信息
-// router.post('/reg', (ctx)=> {
-//     let error_reg = new Buffer(250);
-//     /**
-//      *
-//      * @param  {[string]} error_load      [错误信息]
-//      * @return 注册表信息
-//      */
-//     let result_reg = lib.PassThru_InquiryReg(error_reg);
-//     let data = {};
-//     for(let i = 0;i<result_reg;i++){
-//         data[i] = lib.PassThru_InquiryIndex(i);
-//     }
-//     return ctx.body = result_Model({
-//         count:result_reg,
-//         data:data
-//     }, ref.readCString(error_reg), '/reg');
-// });
+获取注册表信息
+router.post('/reg', (ctx)=> {
+    let error_reg = new Buffer(250);
+    /**
+     *
+     * @param  {[string]} error_load      [错误信息]
+     * @return 注册表信息
+     */
+    let result_reg = lib.PassThru_InquiryReg(error_reg);
+    // let data = {};
+    // for(let i = 0;i<result_reg;i++){
+    //     data[i] = lib.PassThru_InquiryIndex(i);
+    // }
+    return ctx.body = result_Model({
+        count:result_reg,
+        // data:data
+    }, ref.readCString(error_reg), '/reg');
+});
 // 加载动态库
 router.post('/load', (ctx)=> {
     let error_load = new Buffer(250);
@@ -374,40 +374,40 @@ router.post('/passThru_Close', (ctx)=> {
 });
 
 // 统一操作(获取注册表信息&加载动态库)
-// router.post('/ready', (ctx)=> {
-//     // let error_reg = new Buffer(250);
-//     let error_load = new Buffer(250);
-//     let result_reg = lib.PassThru_InquiryReg(error_reg);
-//     let data = {};
-//     for(let i = 0;i<result_reg;i++){
-//         data[i] = lib.PassThru_InquiryIndex(i);
-//     }
-//     if (ref.readCString(error_reg)) {
-//         winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_reg)}`);
-//         return ctx.body = {
-//             status: 500,
-//             errorMsg: ref.readCString(error_reg)
-//         }
-//     }
-//     let result_load = lib.PassThru_LoadDLL(error_load);
-//     if (ref.readCString(error_load)) {
-//         winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_load)}`);
-//         return ctx.body = {
-//             status: 500,
-//             errorMsg: ref.readCString(error_load)
-//         }
-//     }
-//     return ctx.body = {
-//         status: 200,
-//         data: {
-//             result_reg: {
-//                 count:result_reg,
-//                 data:data
-//             },
-//             result_load: result_load
-//         }
-//     }
-// });
+router.post('/ready', (ctx)=> {
+    // let error_reg = new Buffer(250);
+    let error_load = new Buffer(250);
+    let result_reg = lib.PassThru_InquiryReg(error_reg);
+    // let data = {};
+    // for(let i = 0;i<result_reg;i++){
+    //     data[i] = lib.PassThru_InquiryIndex(i);
+    // }
+    if (ref.readCString(error_reg)) {
+        winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_reg)}`);
+        return ctx.body = {
+            status: 500,
+            errorMsg: ref.readCString(error_reg)
+        }
+    }
+    let result_load = lib.PassThru_LoadDLL(error_load);
+    if (ref.readCString(error_load)) {
+        winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_load)}`);
+        return ctx.body = {
+            status: 500,
+            errorMsg: ref.readCString(error_load)
+        }
+    }
+    return ctx.body = {
+        status: 200,
+        data: {
+            result_reg: {
+                count:result_reg,
+                // data:data
+            },
+            result_load: result_load
+        }
+    }
+});
 
 //统一操作(链接设备&IO配置设备&配置过虑器)
 router.post('/start', async(ctx)=> {
