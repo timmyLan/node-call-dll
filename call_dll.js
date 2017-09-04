@@ -375,7 +375,7 @@ router.post('/passThru_Close', (ctx)=> {
 
 // 统一操作(获取注册表信息&加载动态库)
 router.post('/ready', (ctx)=> {
-    // let error_reg = new Buffer(250);
+    let error_reg = new Buffer(250);
     let error_load = new Buffer(250);
     let result_reg = lib.PassThru_InquiryReg(error_reg);
     // let data = {};
