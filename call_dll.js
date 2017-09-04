@@ -55,7 +55,25 @@ let client = createClient();
 client.on("error", function (err) {
     console.log("Error " + err);
 });
-
+// deviceConfig
+let deviceConfig = require('./deviceConfig.json');
+/**
+ * 对比配置端口号是否存在于deviceConfig
+ * @param  {[int]} index [配置端口号]
+ * @return {[type]}       [description]
+ */
+const compareConfig = (index)=>{
+    let keys = Object.keys(deviceConfig);
+    if(keys.indexOf(index) < 0 ){
+        winston.error(`${index} is not in deviceConfig`);
+        return {
+            stauts:500,
+            errorMsg: `${index} is not in deviceConfig`
+        }
+    }else {
+        return null;
+    }
+};
 /**
  * resful返回信息模板
  * @param  {[type]} data     [调用dll返回结果]
@@ -105,23 +123,23 @@ const miss_arg = (miss_errorMsg)=> {
     }
 }
 // 获取注册表信息
-router.post('/reg', (ctx)=> {
-    let error_reg = new Buffer(250);
-    /**
-     *
-     * @param  {[string]} error_load      [错误信息]
-     * @return 注册表信息
-     */
-    let result_reg = lib.PassThru_InquiryReg(error_reg);
-    let data = {};
-    for(let i = 0;i<result_reg;i++){
-        data[i] = lib.PassThru_InquiryIndex(i);
-    }
-    return ctx.body = result_Model({
-        count:result_reg,
-        data:data
-    }, ref.readCString(error_reg), '/reg');
-});
+// router.post('/reg', (ctx)=> {
+//     let error_reg = new Buffer(250);
+//     /**
+//      *
+//      * @param  {[string]} error_load      [错误信息]
+//      * @return 注册表信息
+//      */
+//     let result_reg = lib.PassThru_InquiryReg(error_reg);
+//     let data = {};
+//     for(let i = 0;i<result_reg;i++){
+//         data[i] = lib.PassThru_InquiryIndex(i);
+//     }
+//     return ctx.body = result_Model({
+//         count:result_reg,
+//         data:data
+//     }, ref.readCString(error_reg), '/reg');
+// });
 // 加载动态库
 router.post('/load', (ctx)=> {
     let error_load = new Buffer(250);
@@ -145,6 +163,10 @@ router.post('/open', (ctx)=> {
     if (!index && index !== 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
+    let resultCompare = compareConfig(index);
+    if(resultCompare){
+        return ctx.body = resultCompare;
+    }
     let result_open = lib.PassThru_Open(error_open, index);
     return ctx.body = result_Model(result_open, ref.readCString(error_open), '/open');
 });
@@ -165,6 +187,10 @@ router.post('/connect', async(ctx)=> {
     let {index, protocolID, flags, baudRate} = ctx.request.body;
     if (!index && index !== 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
+    }
+    let resultCompare = compareConfig(index);
+    if(resultCompare){
+        return ctx.body = resultCompare;
     }
     let pChannelID = ref.alloc(ulong);
     let result_connect = lib.PassThru_Connect(error_connect, index, pChannelID, protocolID = 6, flags = 0, baudRate = 500000);
@@ -188,6 +214,10 @@ router.post('/ioctl', async(ctx)=> {
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
+    let resultCompare = compareConfig(index);
+    if(resultCompare){
+        return ctx.body = resultCompare;
+    }
     let pChannelID = await client.get(`passThruConnect${index}_lastest_pChannelID`);
     let result_ioctl = lib.PassThru_Ioctl(error_ioctl, index,pChannelID, ioctlID = 2);
     return ctx.body = result_Model(result_ioctl, ref.readCString(error_ioctl), '/ioctl');
@@ -207,6 +237,10 @@ router.post('/startMsgFilter', async(ctx)=> {
     let {index, filterType} = ctx.request.body;
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
+    }
+    let resultCompare = compareConfig(index);
+    if(resultCompare){
+        return ctx.body = resultCompare;
     }
     let pChannelID = await client.get(`passThruConnect${index}_lastest_pChannelID`);
     let pFilterID = ref.alloc(ulong);
@@ -233,6 +267,10 @@ router.post('/writeMsgs', async(ctx)=> {
     let {index, writeMsgs, timeout} = ctx.request.body;
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
+    }
+    let resultCompare = compareConfig(index);
+    if(resultCompare){
+        return ctx.body = resultCompare;
     }
     if (!writeMsgs) {
         return ctx.body = miss_arg('缺少参数 writeMsgs [Message要发送的字符串]');
@@ -261,6 +299,10 @@ router.post('/readMsgs', async(ctx)=> {
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
+    let resultCompare = compareConfig(index);
+    if(resultCompare){
+        return ctx.body = resultCompare;
+    }
     let result_ReadMsgs;
     let length = ref.alloc(int);
     let pChannelID = await client.get(`passThruConnect${index}_lastest_pChannelID`);
@@ -286,6 +328,10 @@ router.post('/stopMsgFilter', async(ctx)=> {
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
+    let resultCompare = compareConfig(index);
+    if(resultCompare){
+        return ctx.body = resultCompare;
+    }
     let pChannelID = await client.get(`passThruConnect${index}_lastest_pChannelID`);
     let pFilterID = await client.get(`startMsgFilter${index}_lastest_pFilterID`);
     let result_StopMsgFilter = lib.PassThru_StopMsgFilter(error_StopMsgFilter, index ,pChannelID,pFilterID);
@@ -297,6 +343,10 @@ router.post('/disconnect', async(ctx)=> {
     let {index} = ctx.request.body;
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
+    }
+    let resultCompare = compareConfig(index);
+    if(resultCompare){
+        return ctx.body = resultCompare;
     }
     let pChannelID = await client.get(`passThruConnect${index}_lastest_pChannelID`);
     let result_Disconnect = lib.PassThru_Disconnect(error_Disconnect, index,pChannelID);
@@ -315,45 +365,49 @@ router.post('/passThru_Close', (ctx)=> {
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
     }
+    let resultCompare = compareConfig(index);
+    if(resultCompare){
+        return ctx.body = resultCompare;
+    }
     let result_Close = lib.PassThru_Close(error_Close,index);
     return ctx.body = result_Model(result_Close, ref.readCString(error_Close), '/passThru_Close');
 });
 
 // 统一操作(获取注册表信息&加载动态库)
-router.post('/ready', (ctx)=> {
-    let error_reg = new Buffer(250);
-    let error_load = new Buffer(250);
-    let result_reg = lib.PassThru_InquiryReg(error_reg);
-    let data = {};
-    for(let i = 0;i<result_reg;i++){
-        data[i] = lib.PassThru_InquiryIndex(i);
-    }
-    if (ref.readCString(error_reg)) {
-        winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_reg)}`);
-        return ctx.body = {
-            status: 500,
-            errorMsg: ref.readCString(error_reg)
-        }
-    }
-    let result_load = lib.PassThru_LoadDLL(error_load);
-    if (ref.readCString(error_load)) {
-        winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_load)}`);
-        return ctx.body = {
-            status: 500,
-            errorMsg: ref.readCString(error_load)
-        }
-    }
-    return ctx.body = {
-        status: 200,
-        data: {
-            result_reg: {
-                count:result_reg,
-                data:data
-            },
-            result_load: result_load
-        }
-    }
-});
+// router.post('/ready', (ctx)=> {
+//     // let error_reg = new Buffer(250);
+//     let error_load = new Buffer(250);
+//     let result_reg = lib.PassThru_InquiryReg(error_reg);
+//     let data = {};
+//     for(let i = 0;i<result_reg;i++){
+//         data[i] = lib.PassThru_InquiryIndex(i);
+//     }
+//     if (ref.readCString(error_reg)) {
+//         winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_reg)}`);
+//         return ctx.body = {
+//             status: 500,
+//             errorMsg: ref.readCString(error_reg)
+//         }
+//     }
+//     let result_load = lib.PassThru_LoadDLL(error_load);
+//     if (ref.readCString(error_load)) {
+//         winston.error(`call /ready resful,error with call dll ---- ${ref.readCString(error_load)}`);
+//         return ctx.body = {
+//             status: 500,
+//             errorMsg: ref.readCString(error_load)
+//         }
+//     }
+//     return ctx.body = {
+//         status: 200,
+//         data: {
+//             result_reg: {
+//                 count:result_reg,
+//                 data:data
+//             },
+//             result_load: result_load
+//         }
+//     }
+// });
 
 //统一操作(链接设备&IO配置设备&配置过虑器)
 router.post('/start', async(ctx)=> {
@@ -371,6 +425,10 @@ router.post('/start', async(ctx)=> {
     let {index, protocolID, flags, baudRate, filterType, ioctlID} = ctx.request.body;
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
+    }
+    let resultCompare = compareConfig(index);
+    if(resultCompare){
+        return ctx.body = resultCompare;
     }
     let result_open = lib.PassThru_Open(error_open,index);
     if (ref.readCString(error_open)) {
@@ -438,6 +496,10 @@ router.post('/end', async(ctx)=> {
     let {index} = ctx.request.body;
     if (!index && index != 0) {
         return ctx.body = miss_arg('缺少参数 index [Index索引]');
+    }
+    let resultCompare = compareConfig(index);
+    if(resultCompare){
+        return ctx.body = resultCompare;
     }
     let pChannelID = await client.get(`passThruConnect${index}_lastest_pChannelID`);
     let pFilterID = await client.get(`startMsgFilter${index}_lastest_pFilterID`);
