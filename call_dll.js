@@ -122,7 +122,7 @@ const miss_arg = (miss_errorMsg)=> {
         errorMsg: miss_errorMsg
     }
 }
-获取注册表信息
+//获取注册表信息
 router.post('/reg', (ctx)=> {
     let error_reg = new Buffer(250);
     /**
